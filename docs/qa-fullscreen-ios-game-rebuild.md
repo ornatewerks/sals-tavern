@@ -29,10 +29,11 @@ URLs:
 - [x] HUD floats over the game.
 - [x] Canvas resizes to browser/device pixels.
 - [x] Tap starts the game and jumps.
-- [x] Swipe left/right changes one lane.
-- [x] Swipe down slides.
-- [x] Obstacles spawn by lane.
-- [x] Stool/keg/puddle/neon obstacles use different responses.
+- [x] Player stays fixed left in a readable side-scroller view.
+- [x] Tap/space jumps as the primary move.
+- [x] Swipe down / ArrowDown slides under neon.
+- [x] Obstacles and beer routes move right-to-left with visible collision expectations.
+- [x] Stool/keg/puddle/neon obstacles use clear jump/slide responses.
 - [x] Beer collection increases score and combo.
 - [x] Combo changes multiplier.
 - [x] Near misses score bonus points.

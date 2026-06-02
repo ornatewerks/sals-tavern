@@ -8,7 +8,7 @@ CAN YOU TOP THE SAL'S TAVERN RUN BOARD?
 
 Scan to play the fullscreen Sal's Tavern runner.
 
-Swipe lanes. Hop the stools. Slide under neon. Grab beers. Hit Happy Hour. Chase the weekly high score.
+Tap to jump. Slide under neon. Grab the beer routes. Hit Happy Hour. Chase the weekly high score.
 
 ## Prize line
 
