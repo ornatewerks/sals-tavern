@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sal's Tavern — Homepage Concept</title>
+  <meta name="description" content="High-fidelity homepage concept for Sal's Tavern in Hoosick Falls, NY." />
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,600,700,1&f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:#120e0b;
+      --char:#1a1410;
+      --espresso:#2a1d14;
+      --walnut:#4b2f1f;
+      --foam:#f6efe2;
+      --paper:#ead9bf;
+      --brass:#c59a4a;
+      --brass-lo:#9d7836;
+      --beer:#d88b2d;
+      --rose:#b8232f;
+      --rose-dark:#711922;
+      --muted:#a99782;
+      --subtle:#6f6253;
+      --line:rgba(246,239,226,.16);
+      --line-brass:rgba(197,154,74,.45);
+      --line-paper:rgba(42,29,20,.18);
+      --shadow-sm:0 1px 2px rgba(10,7,4,.5);
+      --shadow-md:0 8px 24px -8px rgba(10,7,4,.7);
+      --shadow-lg:0 24px 60px -16px rgba(10,7,4,.8);
+      --glow-beer:0 0 90px -18px rgba(216,139,45,.52);
+      --container:1200px;
+      --wide:1360px;
+      --gutter:clamp(20px,4vw,64px);
+      --h1:clamp(64px,10vw,142px);
+      --h2:clamp(36px,5vw,70px);
+      --h3:clamp(25px,3vw,38px);
+      --body:clamp(16px,1.1vw,18px);
+      --lead:clamp(20px,2vw,27px);
+      --eyebrow:13px;
+      color-scheme:dark;
+    }
+
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; background:var(--ink); }
+    body {
+      margin:0;
+      color:var(--foam);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(216,139,45,.12), transparent 34rem),
+        radial-gradient(circle at 82% 14%, rgba(184,35,47,.08), transparent 28rem),
+        linear-gradient(180deg, #120e0b 0%, #1a1410 46%, #120e0b 100%);
+      font-family:Switzer, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size:var(--body);
+      line-height:1.55;
+      overflow-x:hidden;
+    }
+    body:before {
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-2;
+      pointer-events:none;
+      opacity:.24;
+      background-image:
+        linear-gradient(rgba(246,239,226,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(246,239,226,.025) 1px, transparent 1px);
+      background-size: 84px 84px;
+      mask-image:radial-gradient(circle at 50% 20%, black 0%, transparent 74%);
+    }
+    body:after {
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      pointer-events:none;
+      opacity:.32;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 7px),
+        radial-gradient(circle at 50% 0%, rgba(246,239,226,.08), transparent 36rem);
+      mix-blend-mode:soft-light;
+    }
+    a { color:inherit; text-decoration:none; }
+    img { max-width:100%; display:block; }
+    .wrap { width:min(var(--container), calc(100% - var(--gutter) * 2)); margin-inline:auto; }
+    .wide { width:min(var(--wide), calc(100% - var(--gutter) * 2)); margin-inline:auto; }
+    .eyebrow {
+      color:var(--brass);
+      font-size:var(--eyebrow);
+      font-weight:700;
+      letter-spacing:.21em;
+      text-transform:uppercase;
+    }
+    .serif { font-family:Zodiak, Georgia, serif; }
+    h1,h2,h3,p { margin:0; }
+    h1,h2,h3 { font-family:Zodiak, Georgia, serif; font-weight:650; letter-spacing:-.035em; }
+    h1 { font-size:var(--h1); line-height:.82; }
+    h2 { font-size:var(--h2); line-height:.92; }
+    h3 { font-size:var(--h3); line-height:1.02; }
+    p { color:var(--muted); }
+
+    .site-header {
+      position:fixed;
+      inset:0 0 auto 0;
+      z-index:20;
+      height:76px;
+      display:flex;
+      align-items:center;
+      border-bottom:1px solid rgba(246,239,226,.08);
+      background:linear-gradient(180deg, rgba(18,14,11,.9), rgba(18,14,11,.42));
+      backdrop-filter:blur(18px) saturate(145%);
+    }
+    .nav {
+      width:min(var(--wide), calc(100% - var(--gutter) * 2));
+      margin-inline:auto;
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      align-items:center;
+      gap:22px;
+    }
+    .brand { display:flex; align-items:center; gap:12px; min-width:0; }
+    .brand-mark {
+      width:48px; height:48px;
+      border:1px solid var(--line-brass);
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(216,139,45,.22), rgba(42,29,20,.85));
+      display:grid; place-items:center;
+      box-shadow:var(--shadow-sm), inset 0 1px 0 rgba(246,239,226,.15);
+      color:var(--beer);
+      font-family:Zodiak, Georgia, serif;
+      font-weight:700;
+      font-size:23px;
+    }
+    .brand strong { font-family:Zodiak, Georgia, serif; font-size:25px; letter-spacing:-.03em; font-weight:650; }
+    .brand span { display:block; margin-top:-7px; color:var(--muted); font-size:11px; letter-spacing:.17em; text-transform:uppercase; }
+    .nav-links { display:flex; gap:30px; align-items:center; justify-content:center; color:var(--muted); font-weight:600; font-size:14px; }
+    .nav-links a { position:relative; padding:12px 0; }
+    .nav-links a:after { content:""; position:absolute; left:0; right:0; bottom:5px; height:1px; transform:scaleX(0); background:var(--brass); transform-origin:left; transition:transform .22s ease; }
+    .nav-links a:hover { color:var(--foam); }
+    .nav-links a:hover:after { transform:scaleX(1); }
+    .nav-actions { display:flex; justify-content:flex-end; gap:10px; }
+
+    .btn {
+      min-height:48px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      border-radius:6px;
+      padding:0 22px;
+      font-weight:700;
+      font-size:15px;
+      border:1px solid transparent;
+      position:relative;
+      overflow:hidden;
+      isolation:isolate;
+      white-space:nowrap;
+    }
+    .btn.primary { color:var(--ink); background:linear-gradient(180deg, #e39a38, var(--beer)); box-shadow:var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.22); }
+    .btn.primary:before { content:""; position:absolute; inset:0; z-index:-1; transform:translateX(-101%); background:linear-gradient(90deg, var(--brass), #e4bb66); transition:transform .22s ease; }
+    .btn.primary:hover:before { transform:translateX(0); }
+    .btn.outline { color:var(--foam); border-color:var(--line-brass); background:rgba(246,239,226,.035); box-shadow:inset 0 1px 0 rgba(197,154,74,.18); }
+    .btn.outline:hover { background:rgba(197,154,74,.12); border-color:rgba(197,154,74,.8); }
+    .btn.ghost { color:var(--foam); padding-inline:4px; min-height:auto; border:0; }
+    .btn.ghost:after { content:""; position:absolute; left:4px; right:4px; bottom:7px; height:1px; background:var(--brass); transform:scaleX(.35); transform-origin:left; transition:transform .2s ease; }
+    .btn.ghost:hover:after { transform:scaleX(1); }
+
+    .hero {
+      min-height:96svh;
+      padding:132px 0 96px;
+      display:grid;
+      align-items:center;
+      position:relative;
+      overflow:hidden;
+      border-bottom:1px solid rgba(197,154,74,.16);
+    }
+    .hero:before {
+      content:"TAVERN";
+      position:absolute;
+      left:50%; top:48%;
+      transform:translate(-50%, -50%);
+      font-family:Zodiak, Georgia, serif;
+      font-size:clamp(120px,22vw,340px);
+      font-weight:700;
+      letter-spacing:.04em;
+      color:rgba(246,239,226,.045);
+      white-space:nowrap;
+      pointer-events:none;
+    }
+    .hero:after {
+      content:"";
+      position:absolute;
+      inset:110px var(--gutter) 56px;
+      pointer-events:none;
+      border:1px solid rgba(197,154,74,.18);
+      box-shadow:inset 0 1px 0 rgba(246,239,226,.06), var(--glow-beer);
+      clip-path:polygon(0 0, 18% 0, 18% 1px, 82% 1px, 82% 0, 100% 0, 100% 100%, 82% 100%, 82% calc(100% - 1px), 18% calc(100% - 1px), 18% 100%, 0 100%);
+    }
+    .hero-grid {
+      position:relative;
+      z-index:1;
+      display:grid;
+      grid-template-columns:.78fr 1.22fr;
+      align-items:center;
+      gap:clamp(30px,6vw,80px);
+    }
+    .hero-logo-shell {
+      position:relative;
+      padding:22px;
+      border-radius:999px;
+      background:radial-gradient(circle at 50% 42%, rgba(234,217,191,.13), rgba(197,154,74,.06) 38%, transparent 68%);
+    }
+    .hero-logo-shell:before, .hero-logo-shell:after {
+      content:"";
+      position:absolute;
+      width:92px; height:92px;
+      border-color:var(--brass);
+      opacity:.55;
+    }
+    .hero-logo-shell:before { top:0; left:0; border-top:1px solid; border-left:1px solid; }
+    .hero-logo-shell:after { right:0; bottom:0; border-right:1px solid; border-bottom:1px solid; }
+    .hero-logo {
+      filter:drop-shadow(0 22px 30px rgba(0,0,0,.42)) drop-shadow(0 0 40px rgba(216,139,45,.16));
+      transform:rotate(-1deg);
+    }
+    .hero-copy { max-width:760px; }
+    .hero-copy .eyebrow { margin-bottom:22px; }
+    .hero-copy h1 { margin-left:-6px; text-shadow:0 3px 20px rgba(0,0,0,.38); }
+    .hero-copy .lead { margin-top:26px; max-width:610px; color:#d6c2a6; font-size:var(--lead); line-height:1.35; }
+    .hero-actions { display:flex; align-items:center; gap:12px; margin-top:34px; flex-wrap:wrap; }
+    .chips { display:flex; gap:9px; flex-wrap:wrap; margin-top:28px; }
+    .chip { display:inline-flex; align-items:center; gap:8px; padding:7px 13px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:13px; font-weight:600; background:rgba(246,239,226,.035); }
+    .chip:before { content:""; width:7px; height:7px; border-radius:50%; background:var(--beer); box-shadow:0 0 18px rgba(216,139,45,.75); }
+
+    .today { position:relative; z-index:3; margin-top:-46px; }
+    .brass-plate {
+      border:1px solid var(--line-brass);
+      background:
+        linear-gradient(90deg, transparent, rgba(197,154,74,.09), transparent),
+        linear-gradient(180deg, rgba(43,29,20,.94), rgba(18,14,11,.96));
+      box-shadow:var(--shadow-lg), inset 0 1px 0 rgba(197,154,74,.28);
+      border-radius:2px;
+      position:relative;
+    }
+    .brass-plate:before, .brass-plate:after { content:""; position:absolute; top:14px; width:5px; height:5px; background:var(--brass-lo); border-radius:50%; box-shadow:0 0 0 1px rgba(0,0,0,.22); }
+    .brass-plate:before { left:14px; }
+    .brass-plate:after { right:14px; }
+    .today-inner {
+      display:grid;
+      grid-template-columns:auto 1fr auto auto;
+      align-items:center;
+      gap:22px;
+      padding:22px 32px;
+    }
+    .status { color:var(--foam); font-weight:700; font-size:18px; }
+    .today .meta { color:var(--muted); display:flex; gap:18px; flex-wrap:wrap; }
+    .mini-action { color:var(--beer); font-weight:800; }
+
+    section { padding:clamp(76px,10vw,142px) 0; }
+    .section-head { display:grid; grid-template-columns:300px 1fr; gap:40px; align-items:end; margin-bottom:42px; }
+    .section-head p { max-width:550px; font-size:18px; }
+
+    .food-grid {
+      display:grid;
+      grid-template-columns:1.35fr .85fr .85fr;
+      grid-auto-rows:minmax(210px, auto);
+      gap:18px;
+    }
+    .menu-card {
+      position:relative;
+      border-radius:14px;
+      padding:26px;
+      box-shadow:var(--shadow-md);
+      transition:transform .18s ease, box-shadow .18s ease;
+      overflow:hidden;
+    }
+    .menu-card:hover { transform:translateY(-2px) rotate(-.35deg); box-shadow:var(--shadow-lg); }
+    .menu-card.paper { background:linear-gradient(145deg, #f2e4ca, var(--paper)); color:var(--espresso); border:1px solid var(--line-paper); }
+    .menu-card.paper p, .menu-card.paper .card-label { color:#67462f; }
+    .menu-card.dark { background:linear-gradient(180deg, rgba(42,29,20,.96), rgba(26,20,16,.98)); border-left:1px solid var(--line-brass); border-top:1px solid rgba(246,239,226,.08); }
+    .menu-card.feature { grid-row:span 2; min-height:438px; display:flex; flex-direction:column; justify-content:flex-end; padding:36px; }
+    .menu-card.feature:before {
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 80% 0%, rgba(184,35,47,.15), transparent 20rem),
+        radial-gradient(circle at 18% 20%, rgba(216,139,45,.2), transparent 18rem),
+        repeating-linear-gradient(-10deg, rgba(42,29,20,.06) 0 1px, transparent 1px 9px);
+      pointer-events:none;
+    }
+    .card-label { position:relative; z-index:1; color:var(--brass); font-size:12px; letter-spacing:.18em; text-transform:uppercase; font-weight:800; margin-bottom:18px; }
+    .menu-card h3 { position:relative; z-index:1; margin-bottom:14px; }
+    .menu-card p { position:relative; z-index:1; color:inherit; opacity:.78; max-width:48ch; }
+    .stamp { position:relative; z-index:1; display:inline-flex; align-self:flex-start; color:var(--rose); border:1.5px solid var(--rose); padding:7px 11px; border-radius:2px; text-transform:uppercase; font-size:12px; letter-spacing:.13em; font-weight:800; transform:rotate(-4deg); margin-bottom:24px; }
+    .specials { margin-top:24px; color:var(--muted); }
+    .specials a { color:var(--beer); font-weight:700; }
+
+    .cocktails { background:linear-gradient(180deg, rgba(18,14,11,.12), rgba(42,29,20,.44), rgba(18,14,11,.1)); border-block:1px solid rgba(197,154,74,.12); }
+    .rail { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(280px, 1fr); gap:18px; overflow-x:auto; padding:4px 0 26px; scroll-snap-type:x mandatory; scrollbar-color:var(--brass) transparent; }
+    .cocktail-card { scroll-snap-align:start; min-height:300px; padding:28px; border:1px solid rgba(197,154,74,.32); background:linear-gradient(180deg, rgba(26,20,16,.95), rgba(18,14,11,.94)); border-radius:14px; position:relative; overflow:hidden; box-shadow:var(--shadow-md); }
+    .cocktail-card:before { content:""; position:absolute; inset:auto -20% -45% -20%; height:180px; background:radial-gradient(circle, rgba(216,139,45,.18), transparent 68%); }
+    .cocktail-card.feature { grid-column:auto; min-width:min(520px, 82vw); border-color:rgba(184,35,47,.62); }
+    .cocktail-card h3 { margin-top:46px; }
+    .cocktail-card p { margin-top:14px; }
+
+    .welcome-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:clamp(36px,7vw,90px); align-items:center; }
+    .quote {
+      font-family:Zodiak, Georgia, serif;
+      font-style:italic;
+      font-weight:500;
+      font-size:clamp(42px,5vw,78px);
+      line-height:1.03;
+      letter-spacing:-.035em;
+      color:var(--foam);
+    }
+    .welcome-note { border-left:1px solid var(--line-brass); padding-left:30px; }
+    .welcome-note p { font-size:20px; color:#d3bea2; }
+
+    .visit-grid { display:grid; grid-template-columns:1fr .86fr; gap:26px; align-items:stretch; }
+    .visit-main {
+      padding:42px;
+      min-height:520px;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(216,139,45,.14), transparent 20rem),
+        linear-gradient(180deg, rgba(42,29,20,.72), rgba(18,14,11,.92));
+      border:1px solid rgba(246,239,226,.12);
+      box-shadow:var(--shadow-lg);
+      border-radius:14px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .visit-main h2 { margin-top:18px; }
+    .visit-main .address { color:#d5c0a5; font-size:22px; margin-top:20px; }
+    .visit-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:34px; }
+    .map-card {
+      margin-top:38px;
+      min-height:150px;
+      border:1px solid rgba(197,154,74,.28);
+      background:
+        linear-gradient(30deg, transparent 0 45%, rgba(197,154,74,.13) 45% 46%, transparent 46% 100%),
+        linear-gradient(130deg, transparent 0 35%, rgba(246,239,226,.07) 35% 36%, transparent 36% 100%),
+        rgba(18,14,11,.55);
+      border-radius:8px;
+      display:grid;
+      place-items:center;
+      color:var(--muted);
+      text-align:center;
+      padding:20px;
+    }
+    .hours { padding:32px; }
+    .hours h3 { margin:18px 0 26px; }
+    .hours-row { display:grid; grid-template-columns:1fr auto; gap:22px; padding:14px 0; border-bottom:1px solid rgba(246,239,226,.1); color:var(--muted); font-variant-numeric:tabular-nums; }
+    .hours-row strong { color:var(--foam); font-weight:700; }
+    .hours-row.open strong, .hours-row.open span { color:var(--beer); }
+    .confirm { margin-top:22px; color:var(--subtle); font-size:14px; }
+
+    footer { padding:44px 0 56px; border-top:1px solid rgba(197,154,74,.16); }
+    .footer-grid { display:grid; grid-template-columns:1fr auto; gap:30px; align-items:end; color:var(--muted); }
+    .footer-grid strong { color:var(--foam); font-family:Zodiak, Georgia, serif; font-size:32px; letter-spacing:-.03em; }
+    .footer-links { display:flex; gap:18px; flex-wrap:wrap; justify-content:flex-end; }
+    .footer-links a { color:var(--beer); font-weight:700; }
+
+    .phone-preview {
+      display:none;
+      margin-top:58px;
+      border:1px solid rgba(197,154,74,.26);
+      border-radius:38px;
+      padding:12px;
+      background:#0d0a08;
+      max-width:410px;
+      box-shadow:var(--shadow-lg);
+    }
+    .phone-screen {
+      border-radius:28px;
+      overflow:hidden;
+      background:var(--ink);
+      border:1px solid rgba(246,239,226,.12);
+    }
+    .phone-bar { height:56px; display:flex; align-items:center; justify-content:space-between; padding:0 18px; border-bottom:1px solid rgba(246,239,226,.1); background:rgba(26,20,16,.96); }
+    .phone-bar strong { font-family:Zodiak, Georgia, serif; font-size:22px; }
+    .phone-hero { padding:28px 20px 24px; text-align:left; background:radial-gradient(circle at 50% 0%, rgba(216,139,45,.2), transparent 18rem); }
+    .phone-hero img { width:240px; margin:0 auto 18px; filter:drop-shadow(0 14px 20px rgba(0,0,0,.35)); }
+    .phone-hero h3 { font-size:48px; line-height:.85; }
+    .phone-cta { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 20px 20px; }
+    .phone-plate { margin:0 14px 18px; padding:16px; font-size:14px; color:var(--muted); }
+
+    @media (max-width: 900px) {
+      .site-header { height:68px; }
+      .nav { grid-template-columns:1fr auto; }
+      .nav-links { display:none; }
+      .brand > span:not(.brand-mark) > span { display:none; }
+      .brand strong { font-size:22px; }
+      .nav-actions { gap:8px; }
+      .nav-actions .btn { min-height:42px; padding-inline:13px; font-size:14px; }
+      .hero { padding-top:104px; min-height:auto; }
+      .hero-grid { grid-template-columns:1fr; text-align:left; }
+      .hero-logo-shell { max-width:450px; margin-inline:auto; order:-1; }
+      .hero-copy .lead { font-size:20px; }
+      .today { margin-top:0; }
+      .today-inner { grid-template-columns:1fr 1fr; padding:24px; }
+      .today-inner .eyebrow, .today-inner .status { grid-column:1 / -1; }
+      .section-head { grid-template-columns:1fr; gap:14px; }
+      .food-grid { grid-template-columns:1fr; }
+      .menu-card.feature { min-height:360px; }
+      .welcome-grid, .visit-grid { grid-template-columns:1fr; }
+      .footer-grid { grid-template-columns:1fr; }
+      .footer-links { justify-content:flex-start; }
+      .phone-preview { display:block; }
+    }
+    @media (max-width: 560px) {
+      :root { --gutter:18px; }
+      .brand-mark { width:42px; height:42px; }
+      .nav-actions .btn { min-height:42px; padding-inline:14px; }
+      .hero:after { display:none; }
+      .hero-logo-shell { padding:8px; }
+      .hero-copy h1 { margin-left:0; }
+      .hero-actions { align-items:stretch; }
+      .hero-actions .btn { width:100%; }
+      .chips { gap:7px; }
+      .today-inner { grid-template-columns:1fr; gap:12px; }
+      .mini-action { display:inline-flex; min-height:40px; align-items:center; }
+      .menu-card, .visit-main, .hours { padding:24px; }
+      .menu-card.feature { padding:28px 24px; }
+      .rail { grid-auto-columns:82vw; }
+      .cocktail-card.feature { min-width:82vw; }
+      .quote { font-size:39px; }
+      .welcome-note { padding-left:20px; }
+      .visit-actions .btn { width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="#top" aria-label="Sal's Tavern home">
+        <span class="brand-mark">S</span>
+        <span><strong>Sal's Tavern</strong><span>Hoosick Falls</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="#menu">Menu</a>
+        <a href="#drinks">Drinks</a>
+        <a href="#visit">Visit</a>
+      </div>
+      <div class="nav-actions">
+        <a class="btn outline" href="tel:+15182055097">Call</a>
+        <a class="btn primary" href="https://www.google.com/maps/search/?api=1&query=Sal's%20Tavern%2024%20Classic%20St%20Hoosick%20Falls%20NY" target="_blank" rel="noreferrer">Directions</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-label="Sal's Tavern introduction">
+      <div class="wide hero-grid">
+        <div class="hero-logo-shell">
+          <img class="hero-logo" src="public/assets/sals-logo.png" alt="Sal's Tavern engraved sign with clinking beer mugs and roses" />
+        </div>
+        <div class="hero-copy">
+          <div class="eyebrow">Hoosick Falls, New York · Est. on Classic Street</div>
+          <h1>Pull up a chair.</h1>
+          <p class="lead">Smash burgers, cold drinks, specialty cocktails, and small-town nights on Classic Street.</p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#menu">View the Menu</a>
+            <a class="btn outline" href="#visit">Get Directions</a>
+            <a class="btn ghost" href="tel:+15182055097">Call Sal's</a>
+          </div>
+          <div class="chips" aria-label="Highlights">
+            <span class="chip">Smash Burgers</span>
+            <span class="chip">Specialty Cocktails</span>
+            <span class="chip">Open Thu–Sun</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="today wide" aria-label="Today at Sal's">
+      <div class="brass-plate today-inner">
+        <div class="eyebrow">Today at Sal's</div>
+        <div class="status">Open Thursday–Sunday</div>
+        <div class="meta"><span>24 Classic St, Hoosick Falls</span><span>518-205-5097</span></div>
+        <div class="meta"><a class="mini-action" href="tel:+15182055097">Call</a><a class="mini-action" href="#visit">Directions</a></div>
+      </div>
+    </aside>
+
+    <section id="menu" class="food">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">From the Kitchen</div>
+          <div>
+            <h2>Tavern food, done right.</h2>
+            <p>The site should sell the decision to drive over tonight. First answer: get the burger.</p>
+          </div>
+        </div>
+        <div class="food-grid">
+          <article class="menu-card paper feature">
+            <span class="stamp">Famous for a reason.</span>
+            <div class="card-label">House favorite</div>
+            <h3>Sal's Famous Smash Burgers</h3>
+            <p>The one people drive in for. Smashed thin, crisp at the edges, stacked the way a burger should be.</p>
+          </article>
+          <article class="menu-card paper"><div class="card-label">Comfort food</div><h3>Chicken Pot Pie</h3><p>Comfort food, tavern style.</p></article>
+          <article class="menu-card paper"><div class="card-label">Crock & crust</div><h3>French Onion Soup</h3><p>Crock, crust, and a lot of cheese.</p></article>
+          <article class="menu-card paper"><div class="card-label">Hot plate</div><h3>Philly Cheese Steak</h3><p>Simple, loud, exactly what it should be.</p></article>
+          <article class="menu-card paper"><div class="card-label">Trust it</div><h3>Totachos</h3><p>Tots where the nachos should be.</p></article>
+        </div>
+        <p class="specials">Specials change weekly. <a href="https://www.facebook.com/people/Sals-Tavern/61556502806388/" target="_blank" rel="noreferrer">Follow along on Facebook.</a></p>
+      </div>
+    </section>
+
+    <section id="drinks" class="cocktails">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">From the Bar</div>
+          <div>
+            <h2>Cocktails with a story.</h2>
+            <p>Warm, dark, brass-edged. The drinks get treated like named characters, not a generic list.</p>
+          </div>
+        </div>
+        <div class="rail" aria-label="Cocktail list">
+          <article class="cocktail-card feature"><span class="stamp">Ask the story</span><h3>The Iron Nail</h3><p>There's a story behind the name. Ask your bartender — that's the whole point.</p></article>
+          <article class="cocktail-card"><div class="card-label">House pour</div><h3>Sal's Old Fashioned</h3><p>The way it should be.</p></article>
+          <article class="cocktail-card"><div class="card-label">Crowd favorite</div><h3>Ginja Ninja</h3><p>818 Reposado and ginger liqueur.</p></article>
+          <article class="cocktail-card"><div class="card-label">Named for the street</div><h3>The Cobblestone Buck</h3><p>Spiced rum, lime, ginger beer.</p></article>
+          <article class="cocktail-card"><div class="card-label">No shortcuts</div><h3>Sal's Margarita</h3><p>No mix, no shortcuts.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="welcome">
+      <div class="wrap welcome-grid">
+        <div>
+          <div class="eyebrow" style="margin-bottom:22px">The Place</div>
+          <p class="quote">“Burgers on the table, a cold drink in reach, and somebody nearby with a story worth hearing.”</p>
+        </div>
+        <div class="welcome-note">
+          <p>Sal's is the neighborhood tavern on Classic Street — the kind of place you know before you walk in. Come hungry. Stay awhile.</p>
+          <div class="phone-preview" aria-label="Mobile homepage preview">
+            <div class="phone-screen">
+              <div class="phone-bar"><strong>Sal's</strong><span>Call · Directions</span></div>
+              <div class="phone-hero"><img src="public/assets/sals-logo.png" alt="" /><h3>Pull up a chair.</h3></div>
+              <div class="phone-cta"><a class="btn primary" href="#menu">Menu</a><a class="btn outline" href="#visit">Visit</a></div>
+              <div class="brass-plate phone-plate">Open Thu–Sun · 24 Classic St · 518-205-5097</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="visit" class="visit">
+      <div class="wide visit-grid">
+        <div class="visit-main">
+          <div>
+            <div class="eyebrow">Find Us</div>
+            <h2>24 Classic Street.</h2>
+            <p class="address">Hoosick Falls, NY 12090</p>
+            <div class="visit-actions">
+              <a class="btn primary" href="tel:+15182055097">Call 518-205-5097</a>
+              <a class="btn outline" href="https://www.google.com/maps/search/?api=1&query=Sal's%20Tavern%2024%20Classic%20St%20Hoosick%20Falls%20NY" target="_blank" rel="noreferrer">Get Directions</a>
+              <a class="btn ghost" href="https://www.facebook.com/people/Sals-Tavern/61556502806388/" target="_blank" rel="noreferrer">Facebook</a>
+            </div>
+          </div>
+          <div class="map-card">
+            <div><strong class="serif" style="font-size:28px;color:var(--foam)">Classic Street</strong><br>Styled map block. Real map/link can drop in at build.</div>
+          </div>
+        </div>
+        <aside class="brass-plate hours">
+          <div class="eyebrow">Hours</div>
+          <h3>Open Thursday through Sunday.</h3>
+          <div class="hours-row"><strong>Monday</strong><span>Closed</span></div>
+          <div class="hours-row"><strong>Tuesday</strong><span>Closed</span></div>
+          <div class="hours-row"><strong>Wednesday</strong><span>Closed</span></div>
+          <div class="hours-row open"><strong>Thursday</strong><span>4pm–9pm</span></div>
+          <div class="hours-row open"><strong>Friday</strong><span>12pm–10pm</span></div>
+          <div class="hours-row open"><strong>Saturday</strong><span>12pm–10pm*</span></div>
+          <div class="hours-row open"><strong>Sunday</strong><span>12pm–7pm</span></div>
+          <p class="confirm">*Saturday hours still need client confirmation before launch.</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wide footer-grid">
+      <div><strong>Sal's Tavern</strong><p>Come hungry. Stay awhile.</p></div>
+      <div class="footer-links"><span>Open Thu–Sun</span><span>24 Classic St</span><a href="tel:+15182055097">518-205-5097</a><a href="https://www.facebook.com/people/Sals-Tavern/61556502806388/" target="_blank" rel="noreferrer">Facebook</a></div>
+    </div>
+  </footer>
+</body>
+</html>

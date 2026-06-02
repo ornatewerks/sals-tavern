@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sal's Tavern — Reference Direction V2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..800,40..100,0..1&family=Inter+Tight:wght@500;650;750;850&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --paper:#f4efe3;
+      --paper2:#ebe1cf;
+      --ink:#191612;
+      --muted:#706554;
+      --green:#173b2d;
+      --green2:#092318;
+      --red:#8f211f;
+      --gold:#b78945;
+      --line:rgba(25,22,18,.24);
+      --shadow:0 24px 80px rgba(19,13,6,.18);
+      --serif:'Fraunces', Georgia, serif;
+      --sans:'Inter Tight', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.36;background:
+      radial-gradient(circle at 20% 10%, rgba(183,137,69,.16), transparent 34%),
+      linear-gradient(rgba(25,22,18,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(25,22,18,.025) 1px, transparent 1px);background-size:auto,42px 42px,42px 42px;mix-blend-mode:multiply}
+    a{color:inherit;text-decoration:none}
+    .top{position:sticky;top:0;z-index:10;background:rgba(244,239,227,.94);backdrop-filter:blur(16px);border-bottom:1px solid rgba(25,22,18,.16)}
+    .nav{height:76px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 38px;gap:24px;max-width:1480px;margin:0 auto}.nav-left,.nav-right{display:flex;gap:24px;align-items:center;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:850}.nav-right{justify-content:flex-end}.brand{text-align:center}.brand b{font-family:var(--serif);font-size:30px;letter-spacing:.02em}.brand small{display:block;font-size:10px;letter-spacing:.28em;color:var(--muted);margin-top:2px;text-transform:uppercase}.reserve{background:var(--green);color:#fff;padding:14px 20px;border:1px solid rgba(25,22,18,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+    .hero{display:grid;grid-template-columns:minmax(360px,460px) 1fr;min-height:700px;border-bottom:1px solid var(--line)}.hero-copy{padding:78px 52px 56px 68px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(180deg,var(--paper),var(--paper2))}.eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:900}.hero h1{font-family:var(--serif);font-size:68px;line-height:.92;margin:22px 0 18px;letter-spacing:-.045em;font-weight:500}.hero p{font-family:var(--serif);font-size:24px;line-height:1.25;margin:0;color:#2a241b}.actions{display:grid;gap:10px;margin-top:30px}.btn{display:flex;justify-content:space-between;align-items:center;padding:17px 19px;border:1px solid rgba(25,22,18,.74);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:900}.btn.dark{background:var(--ink);color:var(--paper)}.hours{border-top:1px solid var(--line);padding-top:22px;display:grid;gap:8px;font-size:14px;color:var(--muted)}.hours strong{color:var(--ink);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+    .hero-art{position:relative;overflow:hidden;background:var(--green2);min-height:700px}.hero-art:before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(9,35,24,.10),rgba(9,35,24,.01) 38%,rgba(9,35,24,.20)),linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.18));pointer-events:none}.hero-photo{position:absolute;inset:0;margin:0}.hero-photo img{width:100%;height:100%;display:block;object-fit:cover;object-position:8% 54%;filter:saturate(.9) contrast(1.02) brightness(.98)}.photo-tag{position:absolute;z-index:2;right:30px;bottom:28px;color:var(--paper);background:rgba(9,35,24,.82);border:1px solid rgba(244,239,227,.3);padding:12px 15px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:850;backdrop-filter:blur(10px)}
+    .strip{display:grid;grid-template-columns:1.1fr 1fr 1fr;border-bottom:1px solid var(--line);background:rgba(251,247,237,.46)}.strip div{padding:24px 34px;border-right:1px solid var(--line)}.strip div:last-child{border-right:0}.strip strong{display:block;font-family:var(--serif);font-size:25px;font-weight:500}.strip span{display:block;margin-top:6px;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:850}
+    .room-break{position:relative;min-height:70vh;border-bottom:1px solid var(--line);overflow:hidden;background:var(--ink)}.room-break img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 50%;filter:saturate(.9) contrast(1.04) brightness(.84)}.room-break:before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(14,13,10,.70),rgba(14,13,10,.12) 46%,rgba(14,13,10,.46)),linear-gradient(180deg,rgba(14,13,10,.08),rgba(14,13,10,.42))}.room-copy{position:relative;z-index:2;min-height:70vh;display:flex;flex-direction:column;justify-content:flex-end;width:min(560px,calc(100% - 48px));padding:64px 68px;color:var(--paper)}.room-copy .eyebrow{color:var(--gold)}.room-copy h2{font-family:var(--serif);font-size:66px;line-height:.92;letter-spacing:-.045em;font-weight:500;margin:18px 0 16px}.room-copy p{font-size:18px;line-height:1.45;color:#eadfca;margin:0;max-width:500px}.room-note{margin-top:26px;display:inline-flex;width:max-content;border:1px solid rgba(244,239,227,.28);background:rgba(9,35,24,.72);padding:12px 15px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:850;backdrop-filter:blur(10px)}
+    .section{padding:86px 68px;border-bottom:1px solid var(--line)}.section-head{display:flex;justify-content:space-between;gap:40px;align-items:end;margin-bottom:36px}.section h2{font-family:var(--serif);font-size:58px;line-height:.98;margin:0;font-weight:500;letter-spacing:-.04em}.section-head p{max-width:390px;font-size:16px;line-height:1.5;color:#473d31;margin:0}.handbill{background:#fbf7ed;border:1px solid rgba(25,22,18,.78);box-shadow:9px 9px 0 rgba(23,59,45,.12);padding:30px;max-width:1080px;margin:auto}.handbill-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--ink);padding-bottom:16px;margin-bottom:22px}.stamp{border:1px solid var(--red);color:var(--red);border-radius:50%;width:92px;height:92px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:900;font-size:11px;letter-spacing:.12em;transform:rotate(-7deg)}.handbill h3{font-family:var(--serif);font-size:70px;line-height:.88;margin:0;color:var(--red);font-weight:500}.specials{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:18px}.special{border-top:1px solid var(--line);padding-top:18px}.special b{font-family:var(--serif);font-size:28px;font-weight:500}.special p{font-size:15px;line-height:1.42;color:#4b4135}.price{font-size:12px;font-weight:900;color:var(--green);letter-spacing:.08em}
+    .menu-board{border:1px solid rgba(25,22,18,.78);background:#fbf7ed;box-shadow:9px 9px 0 rgba(23,59,45,.12)}.menu-board-top{display:grid;grid-template-columns:1fr auto;gap:28px;align-items:end;padding:30px;border-bottom:1px solid var(--ink)}.menu-board-top h3{font-family:var(--serif);font-size:64px;line-height:.9;margin:0;color:var(--red);font-weight:500}.menu-board-top p{margin:0;max-width:320px;line-height:1.42;color:#4b4135}.menu-panels{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}.menu-panel{background:var(--paper);padding:0}.menu-panel[open]{background:#f8f1e4}.menu-panel summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:25px 30px;font-family:var(--serif);font-size:31px;line-height:1;font-weight:600}.menu-panel summary::-webkit-details-marker{display:none}.menu-panel summary:after{content:"+";font-family:var(--sans);font-size:24px;color:var(--red)}.menu-panel[open] summary:after{content:"–"}.menu-list{padding:0 30px 28px;display:grid;gap:14px}.menu-item{display:grid;grid-template-columns:1fr auto;gap:18px;border-top:1px solid var(--line);padding-top:15px}.menu-item b{font-size:16px;letter-spacing:.01em}.menu-item span{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--green);font-weight:900}.menu-item p{grid-column:1/-1;margin:0;color:#5a4e40;line-height:1.4}.menu-callout{margin-top:24px;padding:20px 24px;background:var(--green);color:var(--paper);display:flex;justify-content:space-between;gap:20px;align-items:center}.menu-callout strong{font-family:var(--serif);font-size:27px;font-weight:500}.menu-callout a{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--gold)}.game-callout{margin-top:14px;padding:20px 24px;background:#fbf7ed;border:1px solid rgba(25,22,18,.68);box-shadow:6px 6px 0 rgba(143,33,31,.10);display:flex;justify-content:space-between;gap:22px;align-items:center}.game-callout strong{font-family:var(--serif);font-size:27px;font-weight:500;color:var(--red)}.game-callout span{display:block;margin-top:4px;color:#5a4e40}.game-callout a{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--green)}
+    .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}.tile{background:var(--paper);padding:34px;min-height:250px}.tile h3{font-family:var(--serif);font-size:38px;font-weight:500;margin:0 0 20px}.tile p{line-height:1.55;color:#4b4135}.tile.dark{background:var(--green);color:var(--paper)}.tile.dark p{color:#d8ccb8}.tile .meta{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:900;color:var(--red)}.tile.dark .meta{color:var(--gold)}
+    .review-section{background:linear-gradient(180deg,#f4efe3,#eadfcd)}.review-card{max-width:1180px;margin:0 auto;border:1px solid rgba(25,22,18,.78);background:#fbf7ed;box-shadow:9px 9px 0 rgba(23,59,45,.12);display:grid;grid-template-columns:.85fr 1.15fr}.review-mark{padding:38px;background:var(--green);color:var(--paper);display:flex;flex-direction:column;justify-content:space-between;min-height:330px}.review-mark .eyebrow{color:var(--gold)}.review-mark strong{font-family:var(--serif);font-size:72px;line-height:.82;font-weight:500;letter-spacing:-.06em}.review-mark span{font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:900;color:#d8ccb8}.review-copy{padding:42px;display:flex;flex-direction:column;justify-content:space-between;gap:28px}.review-copy h2{font-family:var(--serif);font-size:56px;line-height:.94;font-weight:500;letter-spacing:-.04em;margin:0}.review-copy p{max-width:610px;font-size:18px;line-height:1.5;color:#473d31;margin:0}.review-actions{display:flex;gap:12px;flex-wrap:wrap}.review-actions .btn{width:max-content;min-width:220px}.review-note{border-top:1px solid var(--line);padding-top:18px;font-size:13px;line-height:1.45;color:#706554}
+    .visit{display:grid;grid-template-columns:minmax(360px,.85fr) 1.15fr;gap:0;padding:0}.visit .panel{padding:68px;border-right:1px solid var(--line)}.visit h2{font-family:var(--serif);font-size:66px;line-height:.94;margin:0 0 28px;font-weight:500}.info-line{display:grid;grid-template-columns:104px 1fr;gap:20px;padding:16px 0;border-top:1px solid var(--line);font-size:15px}.info-line span{line-height:1.35}.map{background:var(--green2);color:var(--paper);padding:30px;display:flex;align-items:center;justify-content:center}.map-inner{border:1px solid rgba(244,239,227,.24);width:100%;height:450px;background:var(--green2);overflow:hidden}.map-inner iframe{width:100%;height:100%;border:0;filter:saturate(.85) contrast(1.04)}
+    footer{padding:38px 68px;background:var(--ink);color:var(--paper);display:flex;justify-content:space-between;gap:32px;align-items:center}.foot-brand{font-family:var(--serif);font-size:32px}.foot-links{display:flex;gap:22px;font-size:12px;letter-spacing:.15em;text-transform:uppercase;font-weight:900;color:#d8ccb8}
+    @media(max-width:900px){body:before{opacity:.24;background-size:auto,34px 34px,34px 34px}.top{position:sticky}.nav{height:64px;grid-template-columns:1fr auto;padding:0 16px}.nav-left{display:none}.nav-right{gap:0}.nav-right a:not(.reserve){display:none}.brand{text-align:left}.brand b{font-size:24px}.brand small{font-size:8px;letter-spacing:.22em}.reserve{padding:12px 13px;font-size:10px;letter-spacing:.13em}.hero{display:flex;flex-direction:column;min-height:auto}.hero-copy{order:2;border-right:0;padding:30px 20px 24px;min-height:auto}.hero-art{order:1;min-height:335px}.hero-photo img{object-position:29% 55%;filter:saturate(.92) contrast(1.03) brightness(.95)}.photo-tag{right:14px;bottom:14px;font-size:9px;padding:10px 11px}.eyebrow{font-size:10px;letter-spacing:.18em}.hero h1{font-size:43px;line-height:.93;margin:16px 0 13px}.hero p{font-size:20px}.actions{margin-top:22px}.hero-copy .actions .btn:nth-child(3){display:none}.btn{padding:16px 17px;font-size:11px;letter-spacing:.14em}.hours{margin-top:22px}.strip{grid-template-columns:1fr}.strip div{padding:17px 20px;border-right:0;border-bottom:1px solid var(--line)}.strip div:last-child{border-bottom:0}.strip strong{font-size:23px}.room-break{min-height:500px}.room-break img{object-position:54% 50%;filter:saturate(.9) contrast(1.04) brightness(.74)}.room-copy{min-height:500px;width:auto;padding:34px 20px}.room-copy h2{font-size:41px;max-width:330px}.room-copy p{font-size:16px;max-width:330px}.room-note{width:auto;font-size:9px}.section{padding:48px 20px}.section-head{display:block;margin-bottom:24px}.section h2{font-size:40px}.section-head p{font-size:15px;margin-top:12px}.handbill{padding:18px;box-shadow:6px 6px 0 rgba(23,59,45,.12)}.handbill-top,.menu-board-top{display:block}.stamp{display:none}.handbill h3{font-size:40px}.menu-board-top h3{font-size:38px;line-height:.92}.specials,.grid,.review-card,.visit,.menu-panels{grid-template-columns:1fr}.special b{font-size:24px}.menu-board{box-shadow:6px 6px 0 rgba(23,59,45,.12)}.menu-board-top{padding:20px}.menu-board-top p{margin-top:12px}.menu-panel summary{font-size:23px;padding:20px}.menu-list{padding:0 20px 20px;gap:12px}.menu-item{grid-template-columns:1fr;padding-top:13px}.menu-item b{font-size:15px}.menu-item span{margin-top:-8px;font-size:10px}.menu-item p{font-size:14px}.menu-callout{display:block;padding:18px}.menu-callout strong{font-size:23px}.menu-callout a{display:block;margin-top:13px}.game-callout{display:block;padding:18px}.game-callout strong{font-size:23px}.game-callout a{display:block;margin-top:13px}.visit .panel{padding:44px 20px;border-right:0}.visit h2{font-size:44px}.info-line{grid-template-columns:78px 1fr;gap:14px;font-size:15px}.map{padding:16px}.map-inner{height:300px}footer{display:block;padding:32px 20px}.foot-links{flex-wrap:wrap;margin-top:22px;gap:18px}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <nav class="nav">
+      <div class="nav-left"><a href="#menu">Menu</a><a href="#specials">Specials</a><a href="#reviews">Reviews</a><a href="#visit">Visit</a></div>
+      <a class="brand" href="#"><b>Sal's Tavern</b><small>Hoosick Falls, NY</small></a>
+      <div class="nav-right"><a href="#reviews">Yelp</a><a href="#visit">Visit</a><a href="tel:+15182055097">Call</a><a class="reserve" href="https://www.google.com/maps/search/?api=1&query=24%20Classic%20St%2C%20Hoosick%20Falls%2C%20NY%2012090" target="_blank" rel="noopener">Directions</a></div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <div>
+          <div class="eyebrow">Hoosick Falls, NY</div>
+          <h1>Cold drinks. Hot food. Good company.</h1>
+          <p>A small-town tavern with a proper menu, a warm bar, and weekly specials.</p>
+          <div class="actions">
+            <a class="btn dark" href="#menu"><span>View Menu</span><span>→</span></a>
+            <a class="btn" href="tel:+15182055097"><span>Call 518-205-5097</span><span>→</span></a>
+            <a class="btn" href="https://www.google.com/maps/search/?api=1&query=24%20Classic%20St%2C%20Hoosick%20Falls%2C%20NY%2012090" target="_blank" rel="noopener"><span>Get Directions</span><span>→</span></a>
+          </div>
+        </div>
+        <div class="hours">
+          <strong>Open this week</strong>
+          <span>Closed Monday–Wednesday</span>
+          <span>Thu 4–9 · Fri 12–10 · Sat 12–10 · Sun 12–7</span>
+        </div>
+      </div>
+      <div class="hero-art" aria-label="Sal's Tavern brick facade and hanging sign">
+        <figure class="hero-photo">
+          <img src="public/assets/sals-tavern-exterior-ai-hero.png" alt="Sal's Tavern brick facade with the round Sal's Tavern hanging sign">
+          <figcaption class="photo-tag">Historic brick · small-town bar</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="strip" aria-label="Sal's Tavern quick info">
+      <div><strong>24 Classic St</strong><span>Hoosick Falls, NY</span></div>
+      <div><strong>518-205-5097</strong><span>call ahead</span></div>
+      <div><strong>Thu–Sun</strong><span>closed Monday–Wednesday</span></div>
+    </section>
+
+    <section class="room-break" aria-label="Inside Sal's Tavern bar room">
+      <img src="public/assets/sals-interior-bar.jpg" alt="Warm interior bar at Sal's Tavern with stools, bottles, chalkboard specials, and pendant lights">
+      <div class="room-copy">
+        <div class="eyebrow">Inside Sal's</div>
+        <h2>A real tavern room.</h2>
+        <p>Dark wood, a full backbar, chalkboard specials, and a seat that feels familiar.</p>
+        <div class="room-note">Bar · kitchen · weekly specials</div>
+      </div>
+    </section>
+
+    <section id="specials" class="section">
+      <div class="section-head">
+        <h2>Menu highlights.</h2>
+        <p>The famous smash burger stays. New full-time favorites and weekly specials keep the board fresh.</p>
+      </div>
+      <div class="handbill">
+        <div class="handbill-top"><h3>New Menu<br>Same Sal's</h3><div class="stamp">Weekly<br>Specials</div></div>
+        <div class="specials">
+          <div class="special"><b>Sal’s Famous Smash Burgers</b><p>The anchor item. Now available Jack Daniels style or Jalapeño style.</p><div class="price">HOUSE FAVORITE</div></div>
+          <div class="special"><b>French Onion Soup</b><p>A fan favorite added to the full-time menu.</p><div class="price">NEW FULL-TIME ITEM</div></div>
+          <div class="special"><b>Philly Cheese Steak</b><p>Comfort-food energy, served without overcomplicating it.</p><div class="price">FAN FAVORITE</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="menu" class="section">
+      <div class="section-head">
+        <h2>Food & drinks.</h2>
+        <p>Simple, readable, and built for quick decisions.</p>
+      </div>
+      <div class="menu-board">
+        <div class="menu-board-top">
+          <h3>Full Menu<br>Featuring</h3>
+          <p>Tap a section to browse.</p>
+        </div>
+        <div class="menu-panels">
+          <details class="menu-panel" open>
+            <summary>From the Kitchen</summary>
+            <div class="menu-list">
+              <div class="menu-item"><b>Chicken Pot Pie</b><span>Comfort</span><p>Warm, familiar, and built for a cold night.</p></div>
+              <div class="menu-item"><b>Pasta Puttanesca</b><span>Full menu</span><p>A richer plate alongside the tavern staples.</p></div>
+              <div class="menu-item"><b>Totachos</b><span>Shareable</span><p>Tater-tot nachos built for the table.</p></div>
+              <div class="menu-item"><b>Pan Seared Chicken Sandwich</b><span>Sandwich</span><p>Simple, crisp, and satisfying.</p></div>
+            </div>
+          </details>
+          <details class="menu-panel" open>
+            <summary>Sal’s Burgers</summary>
+            <div class="menu-list">
+              <div class="menu-item"><b>Sal’s Famous Smash Burger</b><span>Signature</span><p>The regular favorite.</p></div>
+              <div class="menu-item"><b>Jack Daniels Style</b><span>Burger style</span><p>A richer take on the smash burger.</p></div>
+              <div class="menu-item"><b>Jalapeño Style</b><span>Burger style</span><p>Heat, crunch, and a little bite.</p></div>
+              <div class="menu-item"><b>Philly Cheese Steak</b><span>Fan favorite</span><p>Now on the full-time menu.</p></div>
+            </div>
+          </details>
+          <details class="menu-panel">
+            <summary>Soup & Favorites</summary>
+            <div class="menu-list">
+              <div class="menu-item"><b>French Onion Soup</b><span>Fan favorite</span><p>Now on the full-time menu.</p></div>
+              <div class="menu-item"><b>Weekly Specials</b><span>Changes often</span><p>Check Facebook or ask inside.</p></div>
+              <div class="menu-item"><b>New Full-Time Additions</b><span>Ask inside</span><p>Seasonal additions from the kitchen.</p></div>
+            </div>
+          </details>
+          <details class="menu-panel">
+            <summary>Specialty Cocktails</summary>
+            <div class="menu-list">
+              <div class="menu-item"><b>Sal’s Old Fashion</b><span>House</span><p>The tavern classic.</p></div>
+              <div class="menu-item"><b>The Iron Nail</b><span>Ask the story</span><p>A house cocktail with a story behind it.</p></div>
+              <div class="menu-item"><b>Ginja Ninja</b><span>Crowd favorite</span><p>818 Reposado and ginger liquor.</p></div>
+              <div class="menu-item"><b>Sal’s Margarita</b><span>Classic</span><p>Simple, recognizable, and easy to order.</p></div>
+              <div class="menu-item"><b>The Cobblestone Buck</b><span>Spiced rum</span><p>Spiced rum, lime juice, and ginger beer.</p></div>
+              <div class="menu-item"><b>Green Tea Gimlet</b><span>Bright</span><p>A lighter cocktail option for the board.</p></div>
+            </div>
+          </details>
+        </div>
+      </div>
+      <div class="menu-callout">
+        <strong>Weekly specials on Facebook.</strong>
+        <a href="https://www.facebook.com/people/Sals-Tavern/61581542078285/" target="_blank" rel="noopener">Check Facebook →</a>
+      </div>
+      <div class="game-callout">
+        <div><strong>Waiting on a table?</strong><span>Play Sal's Tavern Run — jump stools, dodge barrels, collect beers.</span></div>
+        <a href="/game.html">Play game →</a>
+      </div>
+    </section>
+
+    <section id="reviews" class="section review-section">
+      <div class="review-card">
+        <div class="review-mark">
+          <div class="eyebrow">Local word of mouth</div>
+          <strong>Yelp</strong>
+          <span>Sal's Tavern · Hoosick Falls</span>
+        </div>
+        <div class="review-copy">
+          <div>
+            <h2>Check the latest reviews before you stop in.</h2>
+            <p>See current guest photos, ratings, and recent comments on Sal's live Yelp profile — a simple way to hear what people are saying before you stop in.</p>
+          </div>
+          <div class="review-actions">
+            <a class="btn dark" href="https://www.yelp.com/biz/sals-tavern-hoosick-falls" target="_blank" rel="noopener"><span>Read Yelp Reviews</span><span>→</span></a>
+            <a class="btn" href="https://www.facebook.com/people/Sals-Tavern/61581542078285/" target="_blank" rel="noopener"><span>Facebook Specials</span><span>→</span></a>
+          </div>
+          <div class="review-note">For the latest reviews and photos, Yelp opens in a new tab.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="visit" class="visit">
+      <div class="panel">
+        <h2>Visit Sal's.</h2>
+        <div class="info-line"><strong>Address</strong><span>24 Classic St<br>Hoosick Falls, NY 12090</span></div>
+        <div class="info-line"><strong>Phone</strong><span><a href="tel:+15182055097">518-205-5097</a></span></div>
+        <div class="info-line"><strong>Email</strong><span><a href="mailto:wintersolsticehg@gmail.com">wintersolsticehg@gmail.com</a></span></div>
+        <div class="info-line"><strong>Hours</strong><span>Closed Monday–Wednesday<br>Thursday 4pm–9pm<br>Friday 12pm–10pm<br>Saturday 12pm–10pm<br>Sunday 12pm–7pm</span></div>
+        <div class="actions"><a class="btn dark" href="https://www.google.com/maps/search/?api=1&query=24%20Classic%20St%2C%20Hoosick%20Falls%2C%20NY%2012090" target="_blank" rel="noopener"><span>Open in Maps</span><span>→</span></a><a class="btn" href="https://www.facebook.com/people/Sals-Tavern/61581542078285/" target="_blank" rel="noopener"><span>Facebook Specials</span><span>→</span></a><a class="btn" href="https://www.yelp.com/biz/sals-tavern-hoosick-falls" target="_blank" rel="noopener"><span>Yelp Reviews</span><span>→</span></a></div>
+      </div>
+      <div class="map"><div class="map-inner"><iframe title="Google Map to Sal's Tavern" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?&q=24%20Classic%20St%2C%20Hoosick%20Falls%2C%20NY%2012090&z=15&output=embed"></iframe></div></div>
+    </section>
+  </main>
+
+  <script>
+    const tuneMenuForScreen = () => {
+      const panels = [...document.querySelectorAll('.menu-panel')];
+      if (!panels.length) return;
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        panels.forEach((panel, index) => panel.open = index === 0);
+      } else {
+        panels.forEach((panel, index) => panel.open = index < 2);
+      }
+    };
+    window.addEventListener('DOMContentLoaded', tuneMenuForScreen);
+    window.addEventListener('resize', tuneMenuForScreen);
+  </script>
+  <footer><div class="foot-brand">Sal's Tavern</div><div class="foot-links"><a href="#menu">Menu</a><a href="#reviews">Reviews</a><a href="/game.html">Game</a><a href="tel:+15182055097">Call</a><a href="https://www.google.com/maps/search/?api=1&query=24%20Classic%20St%2C%20Hoosick%20Falls%2C%20NY%2012090" target="_blank" rel="noopener">Directions</a><a href="https://www.facebook.com/people/Sals-Tavern/61581542078285/" target="_blank" rel="noopener">Facebook</a><a href="https://www.yelp.com/biz/sals-tavern-hoosick-falls" target="_blank" rel="noopener">Yelp</a></div></footer>
+</body>
+</html>

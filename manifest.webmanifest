@@ -1,0 +1,13 @@
+{
+  "name": "Sal's Tavern Run",
+  "short_name": "Sal's Run",
+  "description": "A tiny tavern runner game for Sal's Tavern in Hoosick Falls, NY.",
+  "start_url": "/game.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#092318",
+  "theme_color": "#8f211f",
+  "categories": ["games", "entertainment"],
+  "icons": []
+}
