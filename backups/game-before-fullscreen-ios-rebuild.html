@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#092318" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Sal's Run" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <title>Sal's Tavern Run</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..800,40..100,0..1&family=Inter+Tight:wght@500;650;750;850;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --paper:#f4efe3;
+      --paper2:#ebe1cf;
+      --ink:#191612;
+      --muted:#9a8c73;
+      --green:#173b2d;
+      --green2:#071d14;
+      --red:#8f211f;
+      --gold:#d1a65a;
+      --cream:#fff8e8;
+      --line:rgba(244,239,227,.18);
+      --serif:'Fraunces', Georgia, serif;
+      --sans:'Inter Tight', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;width:100%;height:100%;background:var(--green2);color:var(--cream);font-family:var(--sans);overflow:hidden;overscroll-behavior:none;touch-action:none}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% -10%,rgba(209,166,90,.28),transparent 34%),radial-gradient(circle at 10% 90%,rgba(143,33,31,.22),transparent 34%),linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:auto,auto,34px 34px,34px 34px;opacity:.9}
+    button,input{font:inherit}
+    button{cursor:pointer}
+    a{color:inherit;text-decoration:none}
+    .app{position:relative;z-index:1;height:100dvh;min-height:560px;display:grid;grid-template-rows:auto auto 1fr auto;padding:env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 10px);gap:10px;max-width:560px;margin:0 auto;background:linear-gradient(180deg,rgba(9,35,24,.62),rgba(9,35,24,.98))}
+    .topbar{height:42px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:rgba(255,248,232,.82);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:900}
+    .topbar a,.icon-btn{border:1px solid rgba(255,248,232,.18);background:rgba(255,248,232,.06);color:var(--cream);border-radius:999px;padding:9px 11px;line-height:1}.icon-btn{min-width:38px;height:34px;display:grid;place-items:center}
+    .brand{text-align:center;line-height:1}.brand b{display:block;font-family:var(--serif);font-size:20px;letter-spacing:.01em;text-transform:none}.brand small{display:block;margin-top:3px;font-size:8px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase}
+    .hud{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.hud-card{border:1px solid rgba(255,248,232,.16);background:linear-gradient(180deg,rgba(255,248,232,.09),rgba(255,248,232,.045));border-radius:16px;padding:10px 10px 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}.hud-card strong{display:block;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:900}.hud-card span{display:block;margin-top:3px;font-family:var(--serif);font-size:26px;line-height:1;color:var(--cream)}.hud-card.weekly span{color:var(--gold)}
+    .cabinet{position:relative;min-height:0;display:grid;grid-template-rows:auto 1fr auto;border:1px solid rgba(255,248,232,.22);border-radius:28px;background:linear-gradient(180deg,#132f24,#071d14);box-shadow:0 18px 55px rgba(0,0,0,.38),inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden}.marquee{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px 10px;border-bottom:1px solid rgba(255,248,232,.14);background:linear-gradient(90deg,rgba(143,33,31,.42),rgba(209,166,90,.12),rgba(23,59,45,.2))}.marquee h1{margin:0;font-family:var(--serif);font-size:27px;line-height:.9;font-weight:650;letter-spacing:-.04em}.marquee p{margin:3px 0 0;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,248,232,.72);font-weight:900}.prize-pill{border:1px solid rgba(209,166,90,.45);color:#ffe7a8;background:rgba(209,166,90,.12);border-radius:999px;padding:8px 9px;font-size:9px;line-height:1.05;font-weight:900;text-transform:uppercase;letter-spacing:.1em;text-align:center;max-width:122px}
+    .stage{position:relative;min-height:0;background:linear-gradient(180deg,#f8f0df,#e4ceb0);overflow:hidden;touch-action:none}.stage canvas{display:block;width:100%;height:100%;image-rendering:auto}.stage.flash{animation:flash .22s ease-out}.stage.newbest{animation:newbest .5s ease-out}@keyframes flash{0%{filter:brightness(1.35)}100%{filter:brightness(1)}}@keyframes newbest{0%{box-shadow:inset 0 0 0 0 rgba(209,166,90,.0)}40%{box-shadow:inset 0 0 0 999px rgba(209,166,90,.18)}100%{box-shadow:inset 0 0 0 0 rgba(209,166,90,.0)}}
+    .controls{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px 12px;border-top:1px solid rgba(255,248,232,.14);background:rgba(7,29,20,.9)}.tap-zone{height:54px;border:1px solid rgba(255,248,232,.22);background:linear-gradient(180deg,rgba(255,248,232,.09),rgba(255,248,232,.035));border-radius:18px;color:var(--cream);font-weight:900;letter-spacing:.16em;text-transform:uppercase;font-size:12px}.mini-actions{display:flex;gap:8px}.round-btn{width:54px;height:54px;border-radius:18px;border:1px solid rgba(255,248,232,.18);background:rgba(255,248,232,.07);color:var(--cream);font-weight:900;font-size:18px}.tap-zone:active,.round-btn:active{transform:translateY(1px);background:rgba(209,166,90,.16)}
+    .fineprint{text-align:center;color:rgba(255,248,232,.54);font-size:10px;line-height:1.25;padding:0 8px}.fineprint b{color:var(--gold);font-weight:900}.overlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(180deg,rgba(7,29,20,.84),rgba(7,29,20,.7));backdrop-filter:blur(8px)}.overlay.hidden{display:none}.panel{width:min(430px,100%);max-height:100%;overflow:auto;border:1px solid rgba(255,248,232,.22);border-radius:26px;background:linear-gradient(180deg,rgba(25,22,18,.9),rgba(9,35,24,.92));box-shadow:0 20px 60px rgba(0,0,0,.42);padding:22px;text-align:center}.panel .eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:900}.panel h2{font-family:var(--serif);font-weight:600;font-size:45px;line-height:.9;letter-spacing:-.055em;margin:8px 0 10px}.panel p{margin:0 auto 18px;color:#e7d8bc;line-height:1.35;max-width:330px}.cta-row{display:grid;gap:10px}.btn{border:1px solid rgba(255,248,232,.24);border-radius:17px;padding:14px 16px;background:rgba(255,248,232,.07);color:var(--cream);font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:12px}.btn.primary{background:linear-gradient(180deg,#a72b27,#751918);border-color:rgba(255,248,232,.2);box-shadow:0 9px 24px rgba(143,33,31,.35)}.btn.gold{background:linear-gradient(180deg,#d1a65a,#a27331);color:#1b140b}.btn.ghost{background:transparent}.stats-line{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.statbox{border:1px solid rgba(255,248,232,.14);border-radius:15px;padding:10px;background:rgba(255,248,232,.06)}.statbox strong{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}.statbox span{font-family:var(--serif);font-size:28px;color:var(--cream)}
+    .modal{position:fixed;z-index:20;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(7,29,20,.78);backdrop-filter:blur(10px)}.modal.open{display:flex}.modal-card{width:min(460px,100%);max-height:min(740px,92dvh);overflow:auto;border:1px solid rgba(255,248,232,.2);border-radius:26px;background:#101b15;color:var(--cream);padding:20px;box-shadow:0 22px 70px rgba(0,0,0,.48)}.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.modal h3{font-family:var(--serif);font-size:32px;line-height:.95;margin:0}.close{border:1px solid rgba(255,248,232,.2);background:rgba(255,248,232,.06);color:var(--cream);border-radius:13px;width:38px;height:38px;font-weight:900}.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.tab{border:1px solid rgba(255,248,232,.14);background:rgba(255,248,232,.05);color:var(--cream);border-radius:14px;padding:10px 6px;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.tab.active{background:rgba(209,166,90,.18);border-color:rgba(209,166,90,.5);color:#ffe2a0}.board{display:grid;gap:8px}.board-row{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:8px;border:1px solid rgba(255,248,232,.12);background:rgba(255,248,232,.045);border-radius:14px;padding:10px;text-align:left}.board-row .rank{font-family:var(--serif);font-size:20px;color:var(--gold)}.board-row .name{font-weight:900;letter-spacing:.08em}.board-row .meta{font-size:11px;color:var(--muted);margin-top:2px}.board-row .points{font-family:var(--serif);font-size:22px}.empty{border:1px dashed rgba(255,248,232,.18);border-radius:16px;padding:18px;color:var(--muted);text-align:center;line-height:1.35}.field{display:grid;gap:6px;text-align:left;margin:12px 0}.field label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--muted)}.field input{width:100%;border:1px solid rgba(255,248,232,.16);border-radius:15px;background:rgba(255,248,232,.07);color:var(--cream);padding:13px 14px;outline:none}.field input:focus{border-color:rgba(209,166,90,.75)}.helper{font-size:11px;color:var(--muted);line-height:1.35;text-align:left}.status{min-height:20px;color:#ffe2a0;font-size:12px;line-height:1.35;margin:10px 0}.hide{display:none!important}
+    @media (min-width:760px){.app{max-width:720px;padding-left:18px;padding-right:18px}.marquee h1{font-size:35px}.stage{min-height:430px}.hud-card span{font-size:32px}.panel h2{font-size:58px}}
+    @media (max-height:650px){.app{gap:7px}.topbar{height:36px}.hud-card{padding:7px 9px}.hud-card span{font-size:21px}.marquee{padding:10px 12px 8px}.marquee h1{font-size:23px}.controls{padding:8px 10px}.tap-zone,.round-btn{height:46px}.fineprint{display:none}.panel{padding:18px}.panel h2{font-size:38px}}
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Sal's Tavern Run app">
+    <header class="topbar">
+      <a href="/">← Site</a>
+      <div class="brand"><b>Sal's Tavern</b><small>Hoosick Falls</small></div>
+      <button class="icon-btn" id="soundBtn" aria-label="Toggle sound">🔇</button>
+    </header>
+
+    <section class="hud" aria-label="Current run stats">
+      <div class="hud-card"><strong>Score</strong><span id="score">0</span></div>
+      <div class="hud-card"><strong>Beers</strong><span id="beers">0</span></div>
+      <div class="hud-card weekly"><strong>Best</strong><span id="best">0</span></div>
+    </section>
+
+    <section class="cabinet" aria-label="Sal's Tavern runner game">
+      <div class="marquee">
+        <div><h1>Sal's Tavern Run</h1><p>Classic Street Challenge</p></div>
+        <div class="prize-pill">Weekly high score wins a prize</div>
+      </div>
+      <div class="stage" id="gameArea">
+        <canvas id="game" width="900" height="620" aria-label="Runner game canvas"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="panel">
+            <div class="eyebrow" id="overlayEyebrow">Tiny tavern game</div>
+            <h2 id="overlayTitle">Ready?</h2>
+            <p id="overlayText">Avoid stools. Grab beers. Chase the weekly board.</p>
+            <div id="finalStats" class="stats-line hide">
+              <div class="statbox"><strong>Score</strong><span id="finalScore">0</span></div>
+              <div class="statbox"><strong>Beers</strong><span id="finalBeers">0</span></div>
+            </div>
+            <div class="cta-row">
+              <button class="btn primary" id="startBtn">Tap to start</button>
+              <button class="btn gold hide" id="submitBtn">Submit score</button>
+              <button class="btn ghost" id="leaderboardBtn">Leaderboard</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="tap-zone" id="jumpBtn">Tap anywhere to jump</button>
+        <div class="mini-actions">
+          <button class="round-btn" id="pauseBtn" aria-label="Pause">Ⅱ</button>
+          <button class="round-btn" id="boardBtn" aria-label="Leaderboard">★</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="fineprint"><b>Weekly champion wins a Sal's Tavern prize.</b> Redeem in person. 21+ for alcohol prizes. Sal's Tavern may verify scores.</p>
+  </main>
+
+  <div class="modal" id="leaderboardModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><h3>Leaderboard</h3><p class="helper">Daily, weekly, and all-time Sal's Tavern Run scores.</p></div>
+        <button class="close" data-close="leaderboardModal">×</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-board="today">Today</button>
+        <button class="tab" data-board="week">This week</button>
+        <button class="tab" data-board="allTime">All time</button>
+      </div>
+      <div class="board" id="boardRows"><div class="empty">No scores yet. Be the first on the board.</div></div>
+    </div>
+  </div>
+
+  <div class="modal" id="submitModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><h3>Put your name on the board.</h3><p class="helper">Weekly champion wins a Sal's Tavern prize. Redeem in person.</p></div>
+        <button class="close" data-close="submitModal">×</button>
+      </div>
+      <form id="scoreForm">
+        <div class="stats-line">
+          <div class="statbox"><strong>Score</strong><span id="formScore">0</span></div>
+          <div class="statbox"><strong>Beers</strong><span id="formBeers">0</span></div>
+        </div>
+        <div class="field">
+          <label for="playerName">Nickname / initials</label>
+          <input id="playerName" name="playerName" maxlength="12" autocomplete="nickname" placeholder="WILL" required />
+        </div>
+        <div class="field">
+          <label for="playerPhone">Phone optional</label>
+          <input id="playerPhone" name="playerPhone" inputmode="tel" autocomplete="tel" placeholder="Only for prize contact" />
+        </div>
+        <p class="helper">Phone numbers are never shown publicly. Scores may be verified before prize redemption.</p>
+        <div class="status" id="submitStatus"></div>
+        <button class="btn primary" type="submit" id="sendScoreBtn">Submit score</button>
+      </form>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const beersEl = document.getElementById('beers');
+  const bestEl = document.getElementById('best');
+  const overlay = document.getElementById('overlay');
+  const overlayEyebrow = document.getElementById('overlayEyebrow');
+  const overlayTitle = document.getElementById('overlayTitle');
+  const overlayText = document.getElementById('overlayText');
+  const finalStats = document.getElementById('finalStats');
+  const finalScore = document.getElementById('finalScore');
+  const finalBeers = document.getElementById('finalBeers');
+  const startBtn = document.getElementById('startBtn');
+  const submitBtn = document.getElementById('submitBtn');
+  const leaderboardBtn = document.getElementById('leaderboardBtn');
+  const boardBtn = document.getElementById('boardBtn');
+  const jumpBtn = document.getElementById('jumpBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const soundBtn = document.getElementById('soundBtn');
+  const gameArea = document.getElementById('gameArea');
+  const leaderboardModal = document.getElementById('leaderboardModal');
+  const submitModal = document.getElementById('submitModal');
+  const boardRows = document.getElementById('boardRows');
+  const scoreForm = document.getElementById('scoreForm');
+  const playerName = document.getElementById('playerName');
+  const playerPhone = document.getElementById('playerPhone');
+  const submitStatus = document.getElementById('submitStatus');
+  const formScore = document.getElementById('formScore');
+  const formBeers = document.getElementById('formBeers');
+  const sendScoreBtn = document.getElementById('sendScoreBtn');
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const groundY = 485;
+  const gravity = 0.72;
+  const jumpVelocity = -16.8;
+  const palette = { ink:'#191612', paper:'#f4efe3', green:'#173b2d', green2:'#092318', red:'#8f211f', gold:'#d1a65a', tan:'#caa76e', amber:'#f4bf55', cream:'#fff8e8' };
+
+  let best = Number(localStorage.getItem('salsRunBest') || 0);
+  let state = 'idle';
+  let last = 0;
+  let frame = 0;
+  let speed = 5.25;
+  let distance = 0;
+  let score = 0;
+  let beers = 0;
+  let jumps = 0;
+  let obstaclesCleared = 0;
+  let runStartedAt = 0;
+  let runEndedAt = 0;
+  let nextObstacle = 900;
+  let nextBeer = 610;
+  let jumpBufferUntil = 0;
+  let coyoteUntil = 0;
+  let sessionId = '';
+  let obstacles = [];
+  let coins = [];
+  let particles = [];
+  let boardCache = { today: [], week: [], allTime: [] };
+  let activeBoard = 'today';
+  let audioOn = false;
+  let audioCtx = null;
+
+  const player = {x:132,y:groundY,w:58,h:100,vy:0,onGround:true,run:0,blink:0};
+  bestEl.textContent = best;
+
+  function uid(){ return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`; }
+  function buzz(pattern = 18){ if(navigator.vibrate) navigator.vibrate(pattern); }
+  function fmt(n){ return Math.floor(n).toLocaleString(); }
+  function safeName(v){ return String(v || '').toUpperCase().replace(/[^A-Z0-9 ._-]/g,'').trim().slice(0,12); }
+  function tone(freq, dur=.08, type='sine'){
+    if(!audioOn) return;
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(.001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.08, audioCtx.currentTime+.01);
+      gain.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime+dur);
+      osc.connect(gain).connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime+dur+.02);
+    }catch(e){}
+  }
+
+  function reset(){
+    state = 'running';
+    last = performance.now();
+    runStartedAt = last;
+    runEndedAt = 0;
+    frame = 0;
+    speed = 5.25;
+    distance = 0;
+    score = 0;
+    beers = 0;
+    jumps = 0;
+    obstaclesCleared = 0;
+    nextObstacle = 980;
+    nextBeer = 520;
+    obstacles = [];
+    coins = [];
+    particles = [];
+    jumpBufferUntil = 0;
+    coyoteUntil = 0;
+    sessionId = uid();
+    player.y = groundY; player.vy = 0; player.onGround = true; player.run = 0; player.blink = 0;
+    submitBtn.classList.add('hide'); finalStats.classList.add('hide'); overlay.classList.add('hidden');
+    updateHud(); requestAnimationFrame(loop);
+  }
+
+  function endGame(){
+    if(state !== 'running') return;
+    state = 'over'; runEndedAt = performance.now();
+    const final = Math.floor(score);
+    const wasBest = final > best;
+    best = Math.max(best, final);
+    localStorage.setItem('salsRunBest', best);
+    bestEl.textContent = fmt(best);
+    if(wasBest) gameArea.classList.add('newbest');
+    setTimeout(() => gameArea.classList.remove('newbest'), 520);
+    buzz([40,40,85]); tone(120,.18,'sawtooth');
+    overlayEyebrow.textContent = wasBest ? 'New personal best' : 'Run over';
+    overlayTitle.textContent = wasBest ? 'New Best.' : 'Run Over.';
+    overlayText.textContent = wasBest ? 'Nice run. Submit it and chase the weekly board.' : 'The street got you. Run it back or put this score on the board.';
+    finalScore.textContent = fmt(final); finalBeers.textContent = beers;
+    finalStats.classList.remove('hide'); submitBtn.classList.remove('hide');
+    startBtn.textContent = 'Play again'; overlay.classList.remove('hidden');
+  }
+
+  function pause(){
+    if(state === 'running'){
+      state = 'paused'; overlayEyebrow.textContent = 'Paused'; overlayTitle.textContent = 'Paused.'; overlayText.textContent = 'Tap resume when you are ready.'; startBtn.textContent = 'Resume'; submitBtn.classList.add('hide'); finalStats.classList.add('hide'); overlay.classList.remove('hidden');
+    } else if(state === 'paused'){
+      state = 'running'; last = performance.now(); overlay.classList.add('hidden'); requestAnimationFrame(loop);
+    }
+  }
+
+  function updateHud(){ scoreEl.textContent = fmt(score); beersEl.textContent = beers; bestEl.textContent = fmt(best); }
+
+  function requestJump(){
+    const now = performance.now();
+    if(state === 'idle' || state === 'over'){ reset(); return; }
+    if(state === 'paused'){ pause(); return; }
+    if(state !== 'running') return;
+    jumpBufferUntil = now + 120;
+    tryJump(now);
+  }
+  function tryJump(now){
+    if((player.onGround || now < coyoteUntil) && now < jumpBufferUntil){
+      player.vy = jumpVelocity; player.onGround = false; jumpBufferUntil = 0; jumps++; buzz(10); tone(420,.055,'triangle');
+      for(let i=0;i<12;i++) particles.push({x:player.x+16+i*4,y:groundY+20,vx:-1.5-Math.random()*2.4,vy:-Math.random()*2.2,life:1,type:'dust'});
+    }
+  }
+
+  function spawnObstacle(){
+    const roll = Math.random();
+    const type = roll > .66 ? 'keg' : roll > .34 ? 'barrel' : 'stool';
+    const dims = type === 'keg' ? [64,62] : type === 'barrel' ? [58,66] : [66,72];
+    obstacles.push({x:W+50,y:groundY,w:dims[0],h:dims[1],type,passed:false});
+  }
+  function spawnBeer(){
+    coins.push({x:W+50,y:groundY-118-Math.random()*145,r:22,hit:false,bob:Math.random()*Math.PI*2});
+  }
+
+  function update(dt){
+    const now = performance.now(); frame++;
+    speed = Math.min(12.2, speed + dt * .00034);
+    distance += speed * dt * .052;
+    score = distance + beers * 100 + obstaclesCleared * 18;
+    const wasGrounded = player.onGround;
+    player.vy += gravity; player.y += player.vy;
+    if(player.y >= groundY){
+      player.y = groundY; player.vy = 0;
+      if(!player.onGround && now < jumpBufferUntil) player.onGround = true;
+      player.onGround = true;
+    } else if(wasGrounded) {
+      player.onGround = false; coyoteUntil = now + 90;
+    }
+    tryJump(now);
+    player.run += dt * .012;
+    player.blink = Math.max(0, player.blink - dt*.004);
+
+    nextObstacle -= speed * dt * .062;
+    if(nextObstacle <= 0){ spawnObstacle(); nextObstacle = 820 + Math.random()*600 - speed*16; }
+    nextBeer -= speed * dt * .062;
+    if(nextBeer <= 0){ spawnBeer(); nextBeer = 620 + Math.random()*680; }
+
+    obstacles.forEach(o => {
+      o.x -= speed * dt * .062;
+      if(!o.passed && o.x + o.w < player.x){ o.passed = true; obstaclesCleared++; }
+    });
+    coins.forEach(c => { c.x -= speed * dt * .062; c.bob += dt*.006; });
+    particles.forEach(p => {p.x += p.vx*dt*.08; p.y += p.vy*dt*.08; p.vy += .02*dt*.08; p.life -= dt*.0028;});
+    obstacles = obstacles.filter(o => o.x > -110);
+    coins = coins.filter(c => c.x > -90 && !c.hit);
+    particles = particles.filter(p => p.life > 0);
+
+    const pr = {x:player.x+11,y:player.y-player.h+10,w:player.w-18,h:player.h-12};
+    for(const o of obstacles){
+      const or = {x:o.x+9,y:o.y-o.h+9,w:o.w-18,h:o.h-10};
+      if(rectsHit(pr,or)){ endGame(); return; }
+    }
+    for(const c of coins){
+      const cy = c.y + Math.sin(c.bob)*9;
+      if(circleRectHit(c.x, cy, c.r, pr)){
+        c.hit = true; beers++; player.blink = 1; gameArea.classList.add('flash'); setTimeout(()=>gameArea.classList.remove('flash'), 180); buzz(13); tone(760,.07,'triangle');
+        for(let i=0;i<18;i++) particles.push({x:c.x,y:cy,vx:-3+Math.random()*6,vy:-3+Math.random()*6,life:1,type:'gold'});
+      }
+    }
+    updateHud();
+  }
+
+  function rectsHit(a,b){ return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
+  function circleRectHit(cx,cy,r,rect){ const x = Math.max(rect.x, Math.min(cx, rect.x+rect.w)); const y = Math.max(rect.y, Math.min(cy, rect.y+rect.h)); const dx = cx-x, dy = cy-y; return dx*dx + dy*dy < r*r; }
+
+  function draw(){ ctx.clearRect(0,0,W,H); drawBackdrop(); drawStreet(); coins.forEach(drawBeer); obstacles.forEach(drawObstacle); particles.forEach(drawParticle); drawPlayer(); drawSpeedLines(); }
+  function drawBackdrop(){
+    const grad = ctx.createLinearGradient(0,0,0,H); grad.addColorStop(0,'#fff4dd'); grad.addColorStop(.56,'#e6cfaa'); grad.addColorStop(1,'#c49d64'); ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = 'rgba(23,59,45,.09)';
+    for(let x = -((distance*.15)%170); x < W+170; x += 170){ ctx.fillRect(x,86,92,260); ctx.fillRect(x+16,116,24,46); ctx.fillRect(x+52,116,24,46); ctx.fillRect(x+16,194,24,46); ctx.fillRect(x+52,194,24,46); }
+    ctx.fillStyle = 'rgba(143,33,31,.12)'; ctx.fillRect(0,327,W,20);
+    ctx.fillStyle = palette.green; ctx.font = '900 15px Inter Tight, sans-serif'; ctx.fillText('CLASSIC ST · HOOSICK FALLS', 26, 312);
+    ctx.fillStyle = 'rgba(143,33,31,.22)'; ctx.font = '700 42px Fraunces, Georgia, serif'; ctx.fillText("Sal's", W-142, 108);
+  }
+  function drawStreet(){
+    ctx.fillStyle = '#211914'; ctx.fillRect(0,groundY+25,W,H-groundY-25);
+    ctx.fillStyle = '#3b2c20'; ctx.fillRect(0,groundY+25,W,9);
+    ctx.strokeStyle = 'rgba(244,239,227,.36)'; ctx.lineWidth = 3; ctx.setLineDash([36,30]); ctx.beginPath(); ctx.moveTo(-((distance*1.15)%66),groundY+86); ctx.lineTo(W,groundY+86); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(25,22,18,.18)'; ctx.fillRect(0,groundY+17,W,10);
+  }
+  function drawPlayer(){
+    const x = player.x, y = player.y; const leg = Math.sin(player.run) * (player.onGround ? 12 : 4);
+    ctx.save(); ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle = palette.ink; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(x+23,y-26); ctx.lineTo(x+15+leg,y); ctx.moveTo(x+35,y-25); ctx.lineTo(x+43-leg,y); ctx.stroke();
+    ctx.strokeStyle = player.blink > 0 ? palette.gold : palette.red; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(x+30,y-82); ctx.lineTo(x+28,y-35); ctx.stroke();
+    ctx.strokeStyle = palette.ink; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(x+29,y-68); ctx.lineTo(x+6,y-49-leg*.22); ctx.moveTo(x+33,y-68); ctx.lineTo(x+58,y-51+leg*.22); ctx.stroke();
+    ctx.fillStyle = '#d8a16f'; ctx.beginPath(); ctx.arc(x+31,y-100,18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = palette.ink; ctx.fillRect(x+12,y-119,40,13); ctx.fillRect(x+19,y-133,25,15); ctx.fillRect(x+47,y-116,18,6);
+    ctx.fillStyle = palette.paper; ctx.fillRect(x+37,y-102,5,5);
+    ctx.fillStyle = 'rgba(25,22,18,.16)'; ctx.beginPath(); ctx.ellipse(x+32,y+5,44,8,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  function drawObstacle(o){
+    ctx.save(); ctx.translate(o.x,o.y);
+    if(o.type === 'barrel' || o.type === 'keg'){
+      ctx.fillStyle = o.type === 'keg' ? '#7c7d78' : '#8a5428'; ctx.strokeStyle = palette.ink; ctx.lineWidth = 4; roundRect(ctx,0,-o.h,o.w,o.h,15,true,true);
+      ctx.strokeStyle = palette.gold; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(6,-o.h+17); ctx.lineTo(o.w-6,-o.h+17); ctx.moveTo(6,-18); ctx.lineTo(o.w-6,-18); ctx.stroke();
+      if(o.type === 'keg'){ ctx.fillStyle = palette.ink; ctx.font='900 14px Inter Tight'; ctx.fillText('KEG',13,-31); }
+    } else {
+      ctx.strokeStyle = palette.ink; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.fillStyle = '#6b3f24'; roundRect(ctx,0,-o.h,o.w,18,8,true,true);
+      ctx.beginPath(); ctx.moveTo(11,-o.h+16); ctx.lineTo(4,0); ctx.moveTo(o.w-11,-o.h+16); ctx.lineTo(o.w-4,0); ctx.moveTo(17,-26); ctx.lineTo(o.w-17,-26); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawBeer(c){
+    const y = c.y + Math.sin(c.bob)*9; ctx.save(); ctx.translate(c.x,y);
+    ctx.fillStyle = 'rgba(209,166,90,.22)'; ctx.beginPath(); ctx.arc(0,0,38,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#f2c15f'; ctx.strokeStyle = palette.ink; ctx.lineWidth = 4; roundRect(ctx,-13,-22,26,40,6,true,true);
+    ctx.fillStyle = '#fff3cf'; ctx.fillRect(-10,-18,20,8);
+    ctx.strokeStyle = '#f2c15f'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(15,-2,11,-Math.PI/2,Math.PI/2); ctx.stroke();
+    ctx.restore();
+  }
+  function drawParticle(p){ ctx.save(); ctx.globalAlpha = Math.max(0,p.life); ctx.fillStyle = p.type === 'gold' ? palette.gold : palette.paper; ctx.beginPath(); ctx.arc(p.x,p.y,3+p.life*4,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+  function drawSpeedLines(){ ctx.strokeStyle = 'rgba(143,33,31,.15)'; ctx.lineWidth = 2; for(let i=0;i<7;i++){ const y = 52+i*46; const x = W - ((distance*2 + i*155)%W); ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+86,y); ctx.stroke(); } }
+  function roundRect(ctx,x,y,w,h,r,fill,stroke){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); if(fill)ctx.fill(); if(stroke)ctx.stroke(); }
+  function loop(now){ if(state !== 'running') return; const dt = Math.min(32, now - last); last = now; update(dt); draw(); if(state === 'running') requestAnimationFrame(loop); }
+
+  async function fetchLeaderboard(){
+    boardRows.innerHTML = '<div class="empty">Loading board...</div>';
+    try{
+      const res = await fetch('/api/leaderboard', {headers:{accept:'application/json'}});
+      if(!res.ok) throw new Error('No leaderboard API yet');
+      boardCache = await res.json();
+    }catch(e){
+      const local = JSON.parse(localStorage.getItem('salsRunLocalScores') || '[]');
+      boardCache = {today: local.slice(0,10), week: local.slice(0,10), allTime: local.slice(0,10)};
+    }
+    renderBoard(activeBoard);
+  }
+  function renderBoard(type){
+    activeBoard = type;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.board === type));
+    const rows = (boardCache[type] || []).slice(0,10);
+    if(!rows.length){ boardRows.innerHTML = '<div class="empty">No scores yet. Be the first on the board.</div>'; return; }
+    boardRows.innerHTML = rows.map((r,i) => `<div class="board-row"><div class="rank">#${r.rank || i+1}</div><div><div class="name">${safeName(r.name) || 'PLAYER'}</div><div class="meta">${Number(r.beers||0)} beers</div></div><div class="points">${fmt(Number(r.score||0))}</div></div>`).join('');
+  }
+  function openModal(id){ document.getElementById(id).classList.add('open'); document.getElementById(id).setAttribute('aria-hidden','false'); if(id === 'leaderboardModal') fetchLeaderboard(); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); document.getElementById(id).setAttribute('aria-hidden','true'); }
+  function currentRunPayload(){ return { name:safeName(playerName.value), score:Math.floor(score), beers, durationMs:Math.max(0,Math.floor((runEndedAt || performance.now()) - runStartedAt)), jumps, obstaclesCleared, sessionId, phone:playerPhone.value.trim() }; }
+  function saveLocalScore(payload){
+    const scores = JSON.parse(localStorage.getItem('salsRunLocalScores') || '[]');
+    scores.push({name:payload.name, score:payload.score, beers:payload.beers});
+    scores.sort((a,b)=>b.score-a.score); localStorage.setItem('salsRunLocalScores', JSON.stringify(scores.slice(0,20)));
+  }
+
+  startBtn.addEventListener('click', () => state === 'paused' ? pause() : reset());
+  jumpBtn.addEventListener('pointerdown', e => { e.preventDefault(); requestJump(); });
+  gameArea.addEventListener('pointerdown', e => { e.preventDefault(); requestJump(); });
+  pauseBtn.addEventListener('click', pause);
+  soundBtn.addEventListener('click', () => { audioOn = !audioOn; soundBtn.textContent = audioOn ? '🔊' : '🔇'; if(audioOn) tone(520,.06,'triangle'); });
+  leaderboardBtn.addEventListener('click', () => openModal('leaderboardModal'));
+  boardBtn.addEventListener('click', () => openModal('leaderboardModal'));
+  submitBtn.addEventListener('click', () => { formScore.textContent = fmt(score); formBeers.textContent = beers; submitStatus.textContent = ''; openModal('submitModal'); setTimeout(()=>playerName.focus(),80); });
+  document.querySelectorAll('.close').forEach(btn => btn.addEventListener('click', () => closeModal(btn.dataset.close)));
+  document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => renderBoard(btn.dataset.board)));
+  document.querySelectorAll('.modal').forEach(m => m.addEventListener('pointerdown', e => { if(e.target === m) closeModal(m.id); }));
+  window.addEventListener('keydown', e => { if(['Space','ArrowUp','KeyW'].includes(e.code)){ e.preventDefault(); requestJump(); } if(e.code === 'KeyR') reset(); if(e.code === 'Escape'){ closeModal('leaderboardModal'); closeModal('submitModal'); } });
+  scoreForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const payload = currentRunPayload();
+    if(payload.name.length < 2){ submitStatus.textContent = 'Use at least 2 characters for your nickname.'; return; }
+    sendScoreBtn.disabled = true; submitStatus.textContent = 'Submitting...';
+    try{
+      const res = await fetch('/api/submit-score', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload)});
+      if(!res.ok) throw new Error('Leaderboard API not ready');
+      const data = await res.json();
+      submitStatus.textContent = data.isWeeklyLeader ? "You're currently #1 this week. Screenshot this and show the bartender." : `Score submitted. Weekly rank: #${data.rankWeek || '—'}.`;
+    }catch(err){
+      saveLocalScore(payload);
+      submitStatus.textContent = 'Saved on this device for now. Global board will activate when the backend is connected.';
+    }finally{ sendScoreBtn.disabled = false; fetchLeaderboard(); }
+  });
+
+  draw();
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => undefined);
+    });
+  }
+})();
+</script>
+</body>
+</html>
