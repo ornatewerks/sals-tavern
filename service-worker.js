@@ -1,7 +1,12 @@
-const CACHE_NAME = 'sals-run-v1';
+const CACHE_NAME = 'sals-run-v2-fullscreen';
 const APP_SHELL = [
+  '/',
+  '/index.html',
   '/game.html',
-  '/manifest.webmanifest'
+  '/manifest.webmanifest',
+  '/public/assets/app-icon-192.png',
+  '/public/assets/app-icon-512.png',
+  '/assets/sals-run-qr.png'
 ];
 
 self.addEventListener('install', event => {
@@ -27,13 +32,24 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (url.pathname.startsWith('/api/')) return;
 
+  if (url.pathname === '/game.html' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => undefined);
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => undefined);
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => undefined);
+      return response;
+    }))
   );
 });
