@@ -34,6 +34,7 @@ URLs:
 - [x] Swipe down / ArrowDown slides under neon.
 - [x] Obstacles and beer routes move right-to-left with visible collision expectations.
 - [x] Stool/keg/puddle/neon obstacles use clear jump/slide responses.
+- [x] Difficulty ramps continuously: speed rises with distance/clears, hazard cadence tightens, hazard mix gets harsher, and beer rewards become less frequent at later tiers.
 - [x] Gameplay avoids visual clutter: no random beer spam, no stacked hazards in the decision window, and reward routes appear as short intentional arcs after hazard beats.
 - [x] Hazard art is anchored to the ground with shadows and action cues instead of floating as unrelated objects.
 - [x] Hit feedback includes tighter visual/collision alignment, screen shake, and explicit death copy.

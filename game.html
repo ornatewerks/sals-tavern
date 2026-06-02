@@ -99,7 +99,7 @@
   function freshState(){
     return {
       mode:'ready', score:0, bonusScore:0, beers:0, combo:0, maxCombo:0, multiplier:1, wasNewBest:false,
-      best:Number(localStorage.getItem(storageBest)||0), speed:250, distance:0, jumps:0, slides:0,
+      best:Number(localStorage.getItem(storageBest)||0), speed:250, targetSpeed:250, difficulty:0, difficultyTier:0, distance:0, jumps:0, slides:0,
       obstaclesCleared:0, nearMisses:0, stage:stages[0], groundY:0, graceUntil:0,
       obstacleTimer:2.15, powerTimer:8.8, patternIndex:0, reason:'', screenShake:0,
       particles:[], popups:[], obstacles:[], beersOnRun:[], powerups:[], clouds:[], impact:null,
@@ -242,22 +242,46 @@
     return true;
   }
 
-  function weightedObstacle(){
+  function getDifficulty(){
     const d = state.distance;
-    const choices = d < 650 ? ['stool','stool','puddle'] : d < 1500 ? ['stool','keg','puddle','neon'] : ['stool','keg','puddle','neon','stool','neon'];
+    // Difficulty is deliberately smooth: speed rises continuously while spawn
+    // cadence and hazard mix tighten at readable stage gates. It should feel
+    // faster every thirty seconds, not suddenly unfair.
+    const progress = Math.min(1, d / 11000);
+    const tier = Math.min(6, Math.floor(d / 1500));
+    const clearBonus = Math.min(145, state.obstaclesCleared * 3.6);
+    const speed = 220 + progress * 340 + clearBonus;
+    const spawnInterval = Math.max(.74, 2.12 - progress * .95 - state.obstaclesCleared * .009);
+    const rewardChance = Math.max(.24, .82 - tier * .095);
+    const powerInterval = Math.max(6.6, 10.8 - tier * .55);
+    return {progress, tier, speed, spawnInterval, rewardChance, powerInterval};
+  }
+
+  function weightedObstacle(){
+    const {tier} = getDifficulty();
+    const choices = tier < 1
+      ? ['stool','stool','puddle']
+      : tier < 2
+        ? ['stool','keg','puddle','stool']
+        : tier < 4
+          ? ['stool','keg','puddle','neon','stool','neon']
+          : ['keg','puddle','neon','stool','neon','keg','puddle'];
     return choices[Math.floor(Math.random()*choices.length)];
   }
 
   function spawnPattern(){
-    const d = state.distance;
-    const patterns = d < 900
-      ? [{hazard:'stool', reward:true}, {hazard:'puddle', reward:false}, {hazard:'stool', reward:true}]
-      : d < 2600
-        ? [{hazard:'stool', reward:true}, {hazard:'neon', reward:true}, {hazard:'puddle', reward:false}, {hazard:'keg', reward:true}]
-        : [{hazard:'stool', reward:true}, {hazard:'neon', reward:true}, {hazard:'puddle', reward:true}, {hazard:'keg', reward:true}, {hazard:'neon', reward:false}];
+    const {tier, rewardChance} = getDifficulty();
+    const patterns = tier < 1
+      ? [{hazard:'stool'}, {hazard:'puddle'}, {hazard:'stool'}]
+      : tier < 2
+        ? [{hazard:'stool'}, {hazard:'keg'}, {hazard:'puddle'}, {hazard:'stool'}]
+        : tier < 4
+          ? [{hazard:'stool'}, {hazard:'neon'}, {hazard:'puddle'}, {hazard:'keg'}, {hazard:'neon'}]
+          : [{hazard:'keg'}, {hazard:'neon'}, {hazard:'puddle'}, {hazard:'neon'}, {hazard:'stool'}, {hazard:'keg'}];
     const idx = state.patternIndex % patterns.length;
     const pattern = patterns[idx];
-    const spawned = spawnObstacle(pattern.hazard, pattern.reward);
+    const reward = Math.random() < rewardChance;
+    const spawned = spawnObstacle(pattern.hazard, reward);
     if(spawned) state.patternIndex++;
     return spawned;
   }
@@ -314,19 +338,26 @@
     const slow = now < state.effects.slowUntil ? .72 : 1;
     const happy = now < state.effects.happyUntil ? 1.18 : 1;
     state.stage = stages.slice().reverse().find(s => state.distance >= s.at) || stages[0];
-    const ramp = Math.min(1, state.distance/5000);
-    state.speed = (220 + ramp*210 + Math.min(70, state.obstaclesCleared*2.2)) * slow;
+    const difficulty = getDifficulty();
+    state.difficulty = difficulty.progress;
+    if(difficulty.tier > state.difficultyTier){
+      state.difficultyTier = difficulty.tier;
+      const callouts = ['WARM-UP','PICKING UP','BUSY BAR','DINNER RUSH','LAST CALL','CLOSING TIME','HOUSE RECORD PACE'];
+      pop(callouts[difficulty.tier] || 'FASTER', W.w*.5, state.groundY-205, '#ffe6a8');
+      beep(560,.045);
+    }
+    state.targetSpeed = difficulty.speed;
+    state.speed = difficulty.speed * slow;
     state.distance += state.speed*dt*.92;
-    p.run += dt*9;
+    p.run += dt*(8.6 + difficulty.progress*4.4);
 
     state.obstacleTimer -= dt;
     state.powerTimer -= dt;
     if(state.obstacleTimer <= 0){
       const spawned = spawnPattern();
-      const base = state.distance < 900 ? 1.95 : state.distance < 2400 ? 1.55 : 1.2;
-      state.obstacleTimer = spawned ? Math.max(1.05, base + .35 + Math.random()*.65 - state.distance/12000) : .35;
+      state.obstacleTimer = spawned ? difficulty.spawnInterval + Math.random()*.42 : .24;
     }
-    if(state.powerTimer <= 0 && state.obstacles.length < 2){ spawnPower(); state.powerTimer = 9.5 + Math.random()*8; }
+    if(state.powerTimer <= 0 && state.obstacles.length < 2){ spawnPower(); state.powerTimer = difficulty.powerInterval + Math.random()*5.2; }
 
     const wasGrounded = p.grounded;
     p.vy += 1820*dt;
@@ -685,7 +716,7 @@
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => renderBoard(t.dataset.board)));
   if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-  window.__salsDebug = () => state ? {mode:state.mode, score:state.score, distance:Math.round(state.distance), obstacles:state.obstacles.map(o=>({type:o.type,x:Math.round(o.x)})), activeBeers:state.beersOnRun.length, activeBeersAhead:state.beersOnRun.filter(b=>b.x > state.player.x && b.x < W.w + 160).length, activePowerups:state.powerups.length, beers:state.beers, player:{x:Math.round(state.player.x),y:Math.round(state.player.y),grounded:state.player.grounded,sliding:state.player.sliding}, reason:state.reason} : null;
+  window.__salsDebug = () => state ? {mode:state.mode, score:state.score, distance:Math.round(state.distance), speed:Math.round(state.speed), targetSpeed:Math.round(state.targetSpeed), difficulty:Number(state.difficulty.toFixed(3)), tier:state.difficultyTier, obstacleTimer:Number(state.obstacleTimer.toFixed(2)), obstacles:state.obstacles.map(o=>({type:o.type,x:Math.round(o.x)})), activeBeers:state.beersOnRun.length, activeBeersAhead:state.beersOnRun.filter(b=>b.x > state.player.x && b.x < W.w + 160).length, activePowerups:state.powerups.length, beers:state.beers, player:{x:Math.round(state.player.x),y:Math.round(state.player.y),grounded:state.player.grounded,sliding:state.player.sliding}, reason:state.reason} : null;
   state=freshState(); els.soundBtn.textContent=muted?'🔇':'🔊'; els.hintText.textContent='Tap to jump · Swipe down to slide under neon'; resizeCanvas(); updateHud(); showOverlay('ready'); draw();
 })();
 </script>
