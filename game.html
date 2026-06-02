@@ -91,7 +91,7 @@
       mode:'ready', score:0, bonusScore:0, beers:0, combo:0, maxCombo:0, multiplier:1, wasNewBest:false,
       best:Number(localStorage.getItem(storageBest)||0), speed:250, distance:0, jumps:0, slides:0,
       obstaclesCleared:0, nearMisses:0, stage:stages[0], groundY:0, graceUntil:0,
-      obstacleTimer:2.15, beerTimer:1.05, powerTimer:7.5, patternIndex:0, reason:'',
+      obstacleTimer:2.15, powerTimer:8.8, patternIndex:0, reason:'', screenShake:0,
       particles:[], popups:[], obstacles:[], beersOnRun:[], powerups:[], clouds:[],
       effects:{shield:false, magnetUntil:0, slowUntil:0, happyUntil:0, dashUntil:0},
       player:{x:0, y:0, w:58, h:88, vy:0, grounded:true, sliding:false, slideUntil:0, coyoteUntil:0, jumpBufferUntil:0, invulnUntil:0, run:0, blink:0}
@@ -171,18 +171,22 @@
 
   function gameOver(reason){
     if(state.mode !== 'playing') return;
-    state.mode = 'over';
+    state.mode = 'impact';
     state.reason = reason;
     cancelAnimationFrame(raf);
-    const old = state.best;
-    state.wasNewBest = state.score > old;
-    if(state.wasNewBest){
-      localStorage.setItem(storageBest, String(state.score)); state.best = state.score;
-      shell.classList.add('new-best'); setTimeout(()=>shell.classList.remove('new-best'), 700);
-    }
     burst(state.player.x+32, state.player.y-44, 28, state.stage.accent);
     vibrate(80);
-    showOverlay('over'); updateHud();
+    draw();
+    setTimeout(() => {
+      const old = state.best;
+      state.wasNewBest = state.score > old;
+      if(state.wasNewBest){
+        localStorage.setItem(storageBest, String(state.score)); state.best = state.score;
+        shell.classList.add('new-best'); setTimeout(()=>shell.classList.remove('new-best'), 700);
+      }
+      state.mode = 'over';
+      showOverlay('over'); updateHud();
+    }, 220);
   }
 
   function requestJump(){
@@ -210,8 +214,12 @@
     pop('SLIDE', p.x+38, p.y-92, '#d1a65a'); beep(250,.035);
   }
 
-  function spawnObstacle(pattern){
-    const x = W.w + 90;
+  function spawnObstacle(pattern, reward=false){
+    // Keep a single readable hazard beat on screen. If another hazard is already
+    // in the decision window, defer this one instead of creating visual soup.
+    if(state.beersOnRun.some(b => b.x > state.player.x && b.x < W.w + 160)) return false;
+    if(state.obstacles.some(o => o.x > state.player.x && o.x < W.w + 220)) return false;
+    const x = W.w + 120;
     const type = pattern || weightedObstacle();
     const dims = {
       stool:{w:66,h:58,kind:'jump',label:'Jump the stool'},
@@ -219,7 +227,8 @@
       puddle:{w:86,h:30,kind:'jump',label:'Hop the spill'},
       neon:{w:96,h:68,kind:'slide',label:'Slide under neon'}
     }[type];
-    state.obstacles.push({type, x, y:0, w:dims.w, h:dims.h, kind:dims.kind, label:dims.label, passed:false, near:false, warned:false});
+    state.obstacles.push({type, x, y:0, w:dims.w, h:dims.h, kind:dims.kind, label:dims.label, reward, rewardSpawned:false, passed:false, near:false, warned:false});
+    return true;
   }
 
   function weightedObstacle(){
@@ -230,22 +239,29 @@
 
   function spawnPattern(){
     const d = state.distance;
-    const patterns = d < 900 ? [['stool'],['puddle'],['stool']] : d < 2300 ? [['stool'],['neon'],['puddle'],['keg'],['stool','beerRoute']] : [['stool'],['neon'],['puddle'],['keg'],['stool','neon'],['beerRoute','keg']];
-    const pattern = patterns[state.patternIndex++ % patterns.length];
-    if(pattern.includes('beerRoute')) spawnBeerRoute();
-    const obstacleTypes = pattern.filter(x => x !== 'beerRoute');
-    const runId = sessionId;
-    obstacleTypes.forEach((type, i) => setTimeout(() => { if(state.mode === 'playing' && sessionId === runId) spawnObstacle(type); }, i*520));
+    const patterns = d < 900
+      ? [{hazard:'stool', reward:true}, {hazard:'puddle', reward:false}, {hazard:'stool', reward:true}]
+      : d < 2600
+        ? [{hazard:'stool', reward:true}, {hazard:'neon', reward:true}, {hazard:'puddle', reward:false}, {hazard:'keg', reward:true}]
+        : [{hazard:'stool', reward:true}, {hazard:'neon', reward:true}, {hazard:'puddle', reward:true}, {hazard:'keg', reward:true}, {hazard:'neon', reward:false}];
+    const idx = state.patternIndex % patterns.length;
+    const pattern = patterns[idx];
+    const spawned = spawnObstacle(pattern.hazard, pattern.reward);
+    if(spawned) state.patternIndex++;
+    return spawned;
   }
 
-  function spawnBeerRoute(){
-    const count = 4 + Math.floor(Math.random()*3);
-    const startX = W.w + 90;
-    const arc = Math.random() > .45;
+  function spawnBeerRoute(afterHazard='stool'){
+    // Reward routes are small, intentional arcs. They never spawn as random clutter
+    // in front of an active hazard. The player should read: clear hazard → collect route.
+    if(state.beersOnRun.length > 1) return;
+    const count = afterHazard === 'neon' ? 3 : 3;
+    const startX = W.w + 150;
+    const mid = (count-1)/2;
     for(let i=0;i<count;i++){
-      const mid = (count-1)/2;
-      const lift = arc ? Math.max(0, 1 - Math.abs(i-mid)/(mid || 1))*68 : (i%2)*26;
-      state.beersOnRun.push({x:startX+i*62, y:state.groundY-96-lift-Math.random()*14, r:18, hit:false, missed:false, bob:Math.random()*Math.PI*2});
+      const lift = Math.max(0, 1 - Math.abs(i-mid)/(mid || 1)) * (afterHazard === 'puddle' ? 48 : 72);
+      const y = state.groundY - 94 - lift;
+      state.beersOnRun.push({x:startX+i*72, y, r:16, hit:false, missed:false, bob:Math.random()*Math.PI*2});
     }
   }
 
@@ -293,15 +309,13 @@
     p.run += dt*9;
 
     state.obstacleTimer -= dt;
-    state.beerTimer -= dt;
     state.powerTimer -= dt;
     if(state.obstacleTimer <= 0){
-      spawnPattern();
+      const spawned = spawnPattern();
       const base = state.distance < 900 ? 1.95 : state.distance < 2400 ? 1.55 : 1.2;
-      state.obstacleTimer = Math.max(1.05, base + .35 + Math.random()*.65 - state.distance/12000);
+      state.obstacleTimer = spawned ? Math.max(1.05, base + .35 + Math.random()*.65 - state.distance/12000) : .35;
     }
-    if(state.beerTimer <= 0){ spawnBeerRoute(); state.beerTimer = 2.1 + Math.random()*1.4; }
-    if(state.powerTimer <= 0){ spawnPower(); state.powerTimer = 7.5 + Math.random()*7; }
+    if(state.powerTimer <= 0 && state.obstacles.length < 2){ spawnPower(); state.powerTimer = 9.5 + Math.random()*8; }
 
     const wasGrounded = p.grounded;
     p.vy += 1820*dt;
@@ -343,8 +357,6 @@
       const frontGap = r.x - (state.player.x + state.player.w);
       if(!o.warned && frontGap < 260 && frontGap > 190){
         o.warned = true;
-        if(o.type === 'neon') pop('SLIDE', r.x, r.y-15, '#ffccd1');
-        else pop('JUMP', r.x, r.y-15, '#ffe6a8');
       }
       if(!o.near && Math.abs((pr.x+pr.w) - r.x) < 26 && !rectsHit(pr,r)){
         o.near = true; state.nearMisses++; state.combo++; state.bonusScore += 55*state.multiplier;
@@ -353,12 +365,15 @@
       if(!o.passed && r.x + r.w < state.player.x){
         o.passed = true; state.obstaclesCleared++; state.combo++; state.bonusScore += 45*state.multiplier;
         pop('CLEAR', state.player.x+48, state.player.y-112, '#d1a65a');
+        if(o.reward && !o.rewardSpawned && !state.obstacles.some(other => other !== o && other.x > state.player.x)){ o.rewardSpawned = true; spawnBeerRoute(o.type); }
+        o.x = -999;
       }
       if(rectsHit(pr,r)){
         const safe = (o.type === 'neon' && state.player.sliding);
         if(safe) continue;
         if(now < state.graceUntil || now < state.player.invulnUntil){
           state.player.invulnUntil = now + 1200;
+          state.screenShake = Math.max(state.screenShake, 8);
           state.combo = 0;
           burst(r.x+r.w/2, r.y+r.h/2, 18, '#d1a65a');
           pop('WARM-UP SAVE', state.player.x+88, state.player.y-132, '#ffe6a8');
@@ -366,17 +381,18 @@
           continue;
         }
         if(state.effects.shield){
-          state.effects.shield = false; state.player.invulnUntil = now+1200; state.combo = 0;
+          state.effects.shield = false; state.player.invulnUntil = now+1200; state.screenShake = Math.max(state.screenShake, 10); state.combo = 0;
           burst(r.x+r.w/2, r.y+r.h/2, 22, '#d1a65a'); pop('SHIELD SAVE', state.player.x+82, state.player.y-132, '#ffe6a8'); vibrate(45);
           o.x -= 170;
           continue;
         }
+            state.screenShake = Math.max(state.screenShake, 14);
         const reason = o.type === 'neon' ? 'You hit the neon sign. Swipe down earlier and stay low until it passes.' : `You clipped the ${o.type}. Tap earlier to jump cleanly over it.`;
         gameOver(reason); return;
       }
     }
     for(const b of state.beersOnRun){
-      const by = b.y + Math.sin(b.bob)*7;
+      const by = b.y + Math.sin(b.bob)*5;
       if(now < state.effects.magnetUntil && Math.abs(b.x - state.player.x) < 260){
         b.x += ((state.player.x+35)-b.x)*.08;
         b.y += ((state.player.y-96)-b.y)*.08;
@@ -386,6 +402,7 @@
         burst(b.x, by, 14, '#d88b2d'); pop('+'+(125*state.multiplier), b.x, by-22, '#d1a65a'); beep(560,.035);
       } else if(!b.missed && b.x < state.player.x-55){
         b.missed = true;
+        b.hit = true;
         if(state.combo >= 3) pop('COMBO LOST', state.player.x+80, state.player.y-130, '#b8232f');
         state.combo = 0;
       }
@@ -405,37 +422,66 @@
   function draw(){
     const st = state.stage;
     ctx.clearRect(0,0,W.w,W.h);
+    const shake = Math.max(0, state.screenShake || 0);
+    if(shake) state.screenShake *= .82;
+    ctx.save();
+    if(shake > .4) ctx.translate((Math.random()-.5)*shake, (Math.random()-.5)*shake*.45);
     const sky = ctx.createLinearGradient(0,0,0,W.h);
     sky.addColorStop(0, st.sky); sky.addColorStop(.56, '#120e0b'); sky.addColorStop(1, st.road);
     ctx.fillStyle = sky; ctx.fillRect(0,0,W.w,W.h);
     drawBackground(st); drawStreet(st);
-    state.beersOnRun.forEach(drawBeer); state.powerups.forEach(drawPower); state.obstacles.forEach(drawObstacle);
+    drawDecisionLane();
+    state.beersOnRun.forEach(drawBeer);
+    state.powerups.forEach(drawPower);
+    state.obstacles.forEach(drawObstacle);
     drawPlayer(); drawParticles(); drawPopups(); drawWarmup();
+    ctx.restore();
+    drawVignette();
   }
 
   function drawBackground(st){
     ctx.save();
-    const parallax = state.distance*.18;
-    ctx.globalAlpha = .12; ctx.fillStyle = st.accent; ctx.font = '900 '+Math.max(78,W.w*.16)+'px Georgia'; ctx.textAlign='center';
-    ctx.fillText(st.name.toUpperCase(), W.w/2, Math.max(220, W.h*.43));
-    ctx.globalAlpha = .9;
-    for(let x = -((parallax)%180)-80; x < W.w+220; x += 180){
-      ctx.fillStyle = 'rgba(255,248,232,.055)'; ctx.fillRect(x, Math.max(156,W.h*.26), 92, 150);
-      ctx.fillStyle = 'rgba(209,166,90,.16)'; ctx.fillRect(x+16, Math.max(182,W.h*.26+28), 20, 34); ctx.fillRect(x+54, Math.max(182,W.h*.26+28), 20, 34);
+    const parallax = state.distance*.14;
+    ctx.globalAlpha = .045; ctx.fillStyle = st.accent; ctx.font = '900 '+Math.max(74,W.w*.13)+'px Georgia'; ctx.textAlign='center';
+    ctx.fillText(st.name.toUpperCase(), W.w/2, Math.max(210, W.h*.39));
+    ctx.globalAlpha = .72;
+    for(let x = -((parallax)%240)-100; x < W.w+260; x += 240){
+      const top = Math.max(160,W.h*.28);
+      ctx.fillStyle = 'rgba(255,248,232,.038)'; roundedRect(x, top, 96, 142, 4); ctx.fill();
+      ctx.fillStyle = 'rgba(209,166,90,.10)'; roundedRect(x+18, top+34, 18, 30, 2); ctx.fill(); roundedRect(x+58, top+34, 18, 30, 2); ctx.fill();
     }
-    ctx.globalAlpha = .65;
-    ctx.fillStyle = '#d1a65a'; ctx.font = '900 13px system-ui'; ctx.textAlign='left';
-    ctx.fillText('CLASSIC ST · HOOSICK FALLS', 26 - (state.distance*.28 % 260), state.groundY-185);
+    ctx.globalAlpha = .42;
+    ctx.fillStyle = '#d1a65a'; ctx.font = '900 12px system-ui'; ctx.textAlign='left';
+    ctx.fillText('CLASSIC ST · HOOSICK FALLS', 26 - (state.distance*.22 % 320), state.groundY-188);
     ctx.restore();
   }
 
   function drawStreet(st){
     const y = state.groundY;
-    ctx.fillStyle = 'rgba(18,14,11,.72)'; ctx.fillRect(0, y+8, W.w, W.h-y);
+    const road = ctx.createLinearGradient(0,y,0,W.h);
+    road.addColorStop(0,'rgba(18,14,11,.88)'); road.addColorStop(1,'rgba(8,6,5,.96)');
+    ctx.fillStyle = road; ctx.fillRect(0, y+8, W.w, W.h-y);
     ctx.fillStyle = '#332318'; ctx.fillRect(0, y+18, W.w, 14);
-    ctx.strokeStyle = 'rgba(255,248,232,.32)'; ctx.lineWidth = 4; ctx.setLineDash([42,34]);
+    ctx.strokeStyle = 'rgba(255,248,232,.22)'; ctx.lineWidth = 4; ctx.setLineDash([42,34]);
     ctx.beginPath(); ctx.moveTo(-((state.distance*.85)%76), y+82); ctx.lineTo(W.w, y+82); ctx.stroke(); ctx.setLineDash([]);
-    ctx.strokeStyle = st.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W.w,y); ctx.stroke();
+    ctx.strokeStyle = st.accent; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W.w,y); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,248,232,.14)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0,y-1); ctx.lineTo(W.w,y-1); ctx.stroke();
+  }
+
+  function drawDecisionLane(){
+    const y = state.groundY;
+    ctx.save();
+    ctx.globalAlpha = .16; ctx.fillStyle = '#fff8e8';
+    roundedRect(state.player.x-18, y-102, 86, 112, 18); ctx.fill();
+    ctx.globalAlpha = .12; ctx.strokeStyle = '#d1a65a'; ctx.lineWidth = 2; ctx.setLineDash([10,10]);
+    ctx.beginPath(); ctx.moveTo(state.player.x+state.player.w+110, y-114); ctx.lineTo(state.player.x+state.player.w+110, y+6); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawVignette(){
+    const g = ctx.createRadialGradient(W.w*.5,W.h*.44,Math.min(W.w,W.h)*.25,W.w*.5,W.h*.45,Math.max(W.w,W.h)*.72);
+    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.38)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W.w,W.h);
   }
 
   function drawPlayer(){
@@ -444,32 +490,61 @@
     if(performance.now() < p.invulnUntil) ctx.globalAlpha = .58 + Math.sin(performance.now()/55)*.25;
     const leg = Math.sin(p.run)*9;
     ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.shadowColor='rgba(0,0,0,.48)'; ctx.shadowBlur=12; ctx.shadowOffsetY=5;
     ctx.strokeStyle = '#120e0b'; ctx.lineWidth = 8;
     ctx.beginPath();
     if(!sliding){ ctx.moveTo(27, h-34); ctx.lineTo(18+leg, h-2); ctx.moveTo(38, h-34); ctx.lineTo(48-leg, h-2); }
     else { ctx.moveTo(16,h-8); ctx.lineTo(52,h-6); }
     ctx.stroke();
-    ctx.fillStyle = '#fff8e8'; roundedRect(11, sliding?15:10, 45, sliding?24:58, 12); ctx.fill();
+    ctx.shadowBlur=0;
+    const shirt = ctx.createLinearGradient(0,10,0,h); shirt.addColorStop(0,'#fff8e8'); shirt.addColorStop(1,'#d9d0bd');
+    ctx.fillStyle = shirt; roundedRect(11, sliding?15:10, 45, sliding?24:58, 12); ctx.fill();
     ctx.fillStyle = '#b8232f'; roundedRect(18, sliding?22:32, 31, sliding?10:28, 7); ctx.fill();
     ctx.fillStyle = '#d1a65a'; ctx.beginPath(); ctx.arc(33, sliding?13:8, 21, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#120e0b'; ctx.fillRect(22, sliding?9:4, 22, 7);
+    ctx.fillStyle = '#120e0b'; roundedRect(20, sliding?8:3, 26, 8, 4); ctx.fill();
     ctx.restore();
   }
 
   function drawObstacle(o){
     const r = obstacleRect(o);
-    ctx.save(); ctx.translate(r.x+r.w/2, r.y);
+    const cx = r.x+r.w/2;
+    const cue = r.x > state.player.x+state.player.w+35 && r.x < state.player.x+state.player.w+430;
+    ctx.save();
+    // Shadow anchors objects to the ground so collisions feel less arbitrary.
+    ctx.fillStyle='rgba(0,0,0,.36)';
+    ctx.beginPath(); ctx.ellipse(cx, state.groundY+8, Math.max(34,r.w*.48), 10, 0, 0, Math.PI*2); ctx.fill();
+    if(cue){
+      ctx.save();
+      ctx.globalAlpha = .96;
+      ctx.fillStyle = o.type === 'neon' ? 'rgba(184,35,47,.82)' : 'rgba(18,14,11,.72)';
+      roundedRect(cx-42, r.y-38, 84, 26, 13); ctx.fill();
+      ctx.fillStyle = '#fff8e8'; ctx.font='900 12px system-ui'; ctx.textAlign='center';
+      ctx.fillText(o.type === 'neon' ? 'SLIDE' : 'JUMP', cx, r.y-20);
+      ctx.restore();
+    }
+    ctx.translate(cx, r.y);
+    ctx.lineJoin='round'; ctx.lineCap='round';
     if(o.type === 'stool'){
-      ctx.fillStyle='#4b2f1f'; roundedRect(-32,0,64,20,8); ctx.fill(); ctx.fillStyle='#d1a65a'; ctx.fillRect(-23,18,9,54); ctx.fillRect(14,18,9,54);
+      const grad = ctx.createLinearGradient(0,0,0,58); grad.addColorStop(0,'#6a4226'); grad.addColorStop(1,'#2b1a11');
+      ctx.fillStyle=grad; roundedRect(-34,0,68,18,8); ctx.fill();
+      ctx.fillStyle='#d1a65a'; ctx.fillRect(-24,17,8,41); ctx.fillRect(16,17,8,41);
+      ctx.fillStyle='rgba(255,248,232,.18)'; ctx.fillRect(-30,4,60,4);
     }
     if(o.type === 'keg'){
-      ctx.fillStyle='#8f6b3a'; roundedRect(-35,0,70,70,16); ctx.fill(); ctx.fillStyle='#d1a65a'; ctx.fillRect(-35,12,70,8); ctx.fillRect(-35,50,70,8); ctx.fillStyle='rgba(18,14,11,.32)'; ctx.fillRect(-4,8,8,54);
+      const grad = ctx.createLinearGradient(0,0,0,60); grad.addColorStop(0,'#b98b4d'); grad.addColorStop(1,'#5c3a20');
+      ctx.fillStyle=grad; roundedRect(-35,0,70,60,16); ctx.fill();
+      ctx.fillStyle='#2a1810'; ctx.globalAlpha=.35; ctx.fillRect(-35,14,70,7); ctx.fillRect(-35,44,70,7); ctx.globalAlpha=1;
+      ctx.strokeStyle='#d1a65a'; ctx.lineWidth=3; ctx.strokeRect(-30,7,60,46);
     }
     if(o.type === 'puddle'){
-      ctx.fillStyle='rgba(150,190,255,.62)'; ctx.beginPath(); ctx.ellipse(0,18,43,18,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='rgba(255,255,255,.4)'; ctx.beginPath(); ctx.ellipse(-12,13,12,5,0,0,Math.PI*2); ctx.fill();
+      const grad = ctx.createRadialGradient(-8,12,4,0,18,48); grad.addColorStop(0,'rgba(230,245,255,.8)'); grad.addColorStop(1,'rgba(70,135,185,.58)');
+      ctx.fillStyle=grad; ctx.beginPath(); ctx.ellipse(0,18,43,17,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.48)'; ctx.beginPath(); ctx.ellipse(-12,11,12,4,0,0,Math.PI*2); ctx.fill();
     }
     if(o.type === 'neon'){
-      ctx.shadowColor='#ff6674'; ctx.shadowBlur=18; ctx.strokeStyle='#ff6b76'; ctx.lineWidth=7; roundedRect(-48,0,96,58,10); ctx.stroke();
+      ctx.shadowColor='#ff6674'; ctx.shadowBlur=22;
+      ctx.fillStyle='rgba(184,35,47,.24)'; roundedRect(-52,-4,104,70,12); ctx.fill();
+      ctx.strokeStyle='#ff6b76'; ctx.lineWidth=7; roundedRect(-48,0,96,58,10); ctx.stroke();
       ctx.shadowBlur=0; ctx.fillStyle='#fff8e8'; ctx.font='900 15px system-ui'; ctx.textAlign='center'; ctx.fillText('NEON',0,35);
       ctx.fillStyle='rgba(255,107,118,.22)'; ctx.fillRect(-50,58,100,16);
     }
@@ -477,11 +552,14 @@
   }
 
   function drawBeer(b){
-    const y = b.y + Math.sin(b.bob)*7;
-    ctx.save(); ctx.translate(b.x,y); ctx.rotate(Math.sin(b.bob)*.08);
-    ctx.fillStyle='#d88b2d'; roundedRect(-12,-20,24,36,4); ctx.fill();
-    ctx.fillStyle='#fff8e8'; roundedRect(-13,-25,26,9,5); ctx.fill();
-    ctx.strokeStyle='#fff8e8'; ctx.lineWidth=4; ctx.strokeRect(12,-8,10,14);
+    const y = b.y + Math.sin(b.bob)*5;
+    ctx.save(); ctx.translate(b.x,y); ctx.rotate(Math.sin(b.bob)*.06);
+    ctx.shadowColor='rgba(216,139,45,.65)'; ctx.shadowBlur=10;
+    const grad = ctx.createLinearGradient(0,-22,0,18); grad.addColorStop(0,'#ffc267'); grad.addColorStop(1,'#c87117');
+    ctx.fillStyle=grad; roundedRect(-11,-19,22,34,4); ctx.fill();
+    ctx.shadowBlur=0; ctx.fillStyle='#fff8e8'; roundedRect(-12,-24,24,8,5); ctx.fill();
+    ctx.strokeStyle='#fff8e8'; ctx.lineWidth=3; ctx.strokeRect(11,-7,9,13);
+    ctx.fillStyle='rgba(255,255,255,.42)'; roundedRect(-6,-12,5,20,2); ctx.fill();
     ctx.restore();
   }
 
@@ -560,7 +638,7 @@
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => renderBoard(t.dataset.board)));
   if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-  window.__salsDebug = () => state ? {mode:state.mode, score:state.score, distance:Math.round(state.distance), obstacles:state.obstacles.map(o=>({type:o.type,x:Math.round(o.x)})), beers:state.beersOnRun.length, player:{x:Math.round(state.player.x),y:Math.round(state.player.y),grounded:state.player.grounded,sliding:state.player.sliding}, reason:state.reason} : null;
+  window.__salsDebug = () => state ? {mode:state.mode, score:state.score, distance:Math.round(state.distance), obstacles:state.obstacles.map(o=>({type:o.type,x:Math.round(o.x)})), activeBeers:state.beersOnRun.length, activeBeersAhead:state.beersOnRun.filter(b=>b.x > state.player.x && b.x < W.w + 160).length, activePowerups:state.powerups.length, beers:state.beers, player:{x:Math.round(state.player.x),y:Math.round(state.player.y),grounded:state.player.grounded,sliding:state.player.sliding}, reason:state.reason} : null;
   state=freshState(); els.soundBtn.textContent=muted?'🔇':'🔊'; els.hintText.textContent='Tap to jump · Swipe down to slide under neon'; resizeCanvas(); updateHud(); showOverlay('ready'); draw();
 })();
 </script>
