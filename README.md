@@ -38,8 +38,8 @@ The next version should become a full-screen iOS-style tavern runner:
 
 - Fullscreen canvas with HUD overlay.
 - Home-screen/PWA app feel.
-- 3-lane runner movement.
-- Tap-to-jump, swipe-to-change-lanes, swipe-down-to-slide.
+- Premium side-scroller movement with the player fixed left and hazards coming from the right.
+- Tap-to-jump as the primary action, with swipe-down-to-slide for neon signs.
 - Combos, multipliers, near-miss bonuses, and power-ups.
 - Tavern-specific stages: Classic Street, Inside the Tavern, Kitchen Rush, Last Call.
 - Real weekly leaderboard with Vercel KV/Redis.

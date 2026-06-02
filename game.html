@@ -23,7 +23,7 @@
 </head>
 <body>
   <main class="game-shell" id="shell" aria-label="Sal's Tavern Run fullscreen game">
-    <canvas id="game" aria-label="Three-lane tavern runner canvas"></canvas>
+    <canvas id="game" aria-label="Side-scrolling tavern runner canvas"></canvas>
     <header class="hud-overlay">
       <div class="top-row">
         <a class="pill" href="/">← Site</a>
@@ -44,73 +44,524 @@
       <div class="panel">
         <div class="eyebrow" id="overlayEyebrow">Fullscreen tavern arcade</div>
         <h1 id="overlayTitle">Ready?</h1>
-        <p id="overlayText">Swipe lanes. Tap to hop stools. Slide under neon. Grab beers and chase the weekly board.</p>
+        <p id="overlayText">Tap to jump. Swipe down to slide under neon. Grab beers and chase the weekly board.</p>
         <div class="missions" id="missionList"></div>
         <div id="finalStats" class="stats-line hide"><div class="statbox"><strong>Score</strong><span id="finalScore">0</span></div><div class="statbox"><strong>Beers</strong><span id="finalBeers">0</span></div></div>
         <div class="cta-row"><button class="btn primary" id="startBtn">Start run</button><button class="btn gold hide" id="submitBtn">Submit score</button><button class="btn" id="leaderboardBtn">Leaderboard</button></div>
         <div class="qr-strip">Scan the table QR. Beat the room. Redeem in person.</div>
       </div>
     </section>
-    <div class="bottom-hint"><div class="hint-card" id="hintText">Tap to jump · Swipe left/right for lanes · Swipe down to slide</div></div>
+    <div class="bottom-hint"><div class="hint-card" id="hintText">Tap to jump · Swipe down to slide under neon</div></div>
   </main>
   <div class="modal" id="leaderboardModal" aria-hidden="true"><div class="modal-card"><div class="modal-head"><div><h3>Leaderboard</h3><p class="helper">Daily, weekly, and all-time scores. Global boards use Vercel KV when configured.</p></div><button class="close" data-close="leaderboardModal">×</button></div><div class="tabs"><button class="tab active" data-board="today">Today</button><button class="tab" data-board="week">This week</button><button class="tab" data-board="allTime">All time</button></div><div class="board" id="boardRows"><div class="empty">Loading the board…</div></div></div></div>
   <div class="modal" id="submitModal" aria-hidden="true"><div class="modal-card"><div class="modal-head"><div><h3>Put your name on the board.</h3><p class="helper">Weekly champion wins a Sal's Tavern prize. Phone is optional and never public.</p></div><button class="close" data-close="submitModal">×</button></div><form id="scoreForm"><div class="stats-line"><div class="statbox"><strong>Score</strong><span id="formScore">0</span></div><div class="statbox"><strong>Beers</strong><span id="formBeers">0</span></div></div><div class="field"><label for="playerName">Nickname / initials</label><input id="playerName" name="playerName" maxlength="12" autocomplete="nickname" placeholder="WILL" required /></div><div class="field"><label for="playerPhone">Phone optional</label><input id="playerPhone" name="playerPhone" inputmode="tel" autocomplete="tel" placeholder="Only for prize contact" /></div><p class="helper">Scores are rate-limited and sanity-checked before they hit the board.</p><div class="status" id="submitStatus"></div><button class="btn primary" type="submit" id="sendScoreBtn">Submit score</button></form></div></div>
 <script>
 (() => {
   'use strict';
-  const canvas = document.getElementById('game'), ctx = canvas.getContext('2d'), shell = document.getElementById('shell');
-  const els = Object.fromEntries(['score','beers','combo','best','stageName','overlay','overlayEyebrow','overlayTitle','overlayText','missionList','finalStats','finalScore','finalBeers','startBtn','submitBtn','leaderboardBtn','leaderboardModal','boardRows','submitModal','scoreForm','formScore','formBeers','submitStatus','soundBtn','hintText','shieldChip','magnetChip','slowChip','dashChip','happyChip'].map(id => [id, document.getElementById(id)]));
-  const W = { w: innerWidth, h: innerHeight, dpr: 1 }; let raf = 0, last = 0, runStart = 0, sessionId = '', muted = localStorage.getItem('salsMuted') !== '0';
-  const storageBest = 'salsRunBestV2'; const stages = [{name:'Classic Street',at:0,sky:'#092318',road:'#2a1d14',accent:'#d1a65a'},{name:'Tavern Room',at:850,sky:'#1a1410',road:'#3b2618',accent:'#b8232f'},{name:'Kitchen Rush',at:1900,sky:'#23150f',road:'#4b2f1f',accent:'#d88b2d'},{name:'Last Call',at:3300,sky:'#07111d',road:'#17111f',accent:'#9ab7ff'}];
-  const dailyMissions = [{id:'beers',label:'Regular order',text:'Collect 12 beers in one run.'},{id:'combo',label:'Happy hour',text:'Reach a 10 combo.'},{id:'stage',label:'Stay awhile',text:'Make it to Last Call.'}];
-  let state, pointerStart = null, boardCache = {today:[],week:[],allTime:[],configured:false}, activeBoard = 'today';
-  function freshState(){return {mode:'ready',score:0,beers:0,combo:0,maxCombo:0,multiplier:1,best:Number(localStorage.getItem(storageBest)||0),speed:265,distance:0,jumps:0,slides:0,obstaclesCleared:0,nearMisses:0,laneCount:3,laneXs:[0,0,0],laneWidth:0,groundY:0,spawnTimer:0,beerTimer:0,powerTimer:5,stage:stages[0],particles:[],popups:[],obstacles:[],collectibles:[],powerups:[],effects:{shield:false,magnetUntil:0,slowUntil:0,dashUntil:0,happyUntil:0},player:{lane:1,targetLane:1,x:0,y:0,w:52,h:82,vy:0,jumping:false,sliding:false,slideUntil:0,invulnUntil:0}}}
-  function resizeCanvas(){const dpr=Math.min(devicePixelRatio||1,2);const rect=canvas.getBoundingClientRect();W.w=rect.width||innerWidth;W.h=rect.height||innerHeight;W.dpr=dpr;canvas.width=Math.floor(W.w*dpr);canvas.height=Math.floor(W.h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);updateLanes()} addEventListener('resize', resizeCanvas); addEventListener('orientationchange',()=>setTimeout(resizeCanvas,130));
-  function updateLanes(){ if(!state) return; state.laneWidth = W.w/state.laneCount; state.laneXs=[state.laneWidth*.5,state.laneWidth*1.5,state.laneWidth*2.5]; state.groundY=Math.max(330,W.h-145); state.player.x = state.laneXs[state.player.targetLane ?? state.player.lane]; state.player.y = state.groundY-state.player.h; }
-  function showOverlay(kind){els.overlay.classList.remove('hidden'); els.finalStats.classList.toggle('hide', kind!=='over'); els.submitBtn.classList.toggle('hide', kind!=='over'); if(kind==='ready'){els.overlayEyebrow.textContent='Fullscreen tavern arcade';els.overlayTitle.textContent='Ready?';els.overlayText.textContent='Swipe lanes. Tap to hop stools. Slide under neon. Grab beers and chase the weekly board.';els.startBtn.textContent='Start run'; renderMissions();} if(kind==='pause'){els.overlayEyebrow.textContent='Paused';els.overlayTitle.textContent='Catch your breath.';els.overlayText.textContent='The stool can wait. Tap resume to get back on Classic Street.';els.startBtn.textContent='Resume';} if(kind==='over'){els.overlayEyebrow.textContent = state.score > state.best ? 'New house record' : 'Run over'; els.overlayTitle.textContent = state.score > state.best ? 'New best.' : 'One more?'; els.overlayText.textContent='Submit your score or take another run at the weekly board.'; els.startBtn.textContent='Run it back'; els.finalScore.textContent=state.score; els.finalBeers.textContent=state.beers; els.formScore.textContent=state.score; els.formBeers.textContent=state.beers; renderMissions();}}
-  function renderMissions(){els.missionList.innerHTML = dailyMissions.map(m=>`<div class="mission"><b>${m.label}</b><span>${m.text}</span></div>`).join('')}
-  function startRun(){state=freshState(); sessionId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now()); resizeCanvas(); runStart=performance.now(); last=runStart; els.overlay.classList.add('hidden'); state.mode='playing'; tick(last)}
-  function pause(){ if(state.mode==='playing'){state.mode='paused'; cancelAnimationFrame(raf); showOverlay('pause')} else if(state.mode==='paused'){els.overlay.classList.add('hidden');state.mode='playing';last=performance.now();tick(last)} }
-  function gameOver(){state.mode='over'; cancelAnimationFrame(raf); const old=state.best; if(state.score>old){localStorage.setItem(storageBest,String(state.score)); state.best=state.score; shell.classList.add('new-best'); setTimeout(()=>shell.classList.remove('new-best'),700)} burst(state.player.x,state.player.y,24,state.stage.accent); vibrate(80); showOverlay('over'); updateHud()}
-  function changeLane(delta){ if(state.mode!=='playing') return; state.player.targetLane=Math.max(0,Math.min(2,state.player.targetLane+delta)); pop(delta<0?'←':'→', state.player.x, state.player.y-50, '#ffe6a8') }
-  function requestJump(){ if(state.mode==='ready'||state.mode==='over'){startRun();return} if(state.mode==='paused'){pause();return} if(state.mode!=='playing')return; const p=state.player; if(!p.jumping){p.vy=-720;p.jumping=true;state.jumps++; pop('HOP',p.x,p.y-25,'#fff8e8'); beep(420,.04)}}
-  function requestSlide(){ if(state.mode!=='playing')return; state.player.sliding=true; state.player.slideUntil=performance.now()+620; state.slides++; pop('SLIDE',state.player.x,state.player.y-25,'#d1a65a') }
-  function activatePower(type){const now=performance.now(); if(type==='shield') state.effects.shield=true; if(type==='magnet') state.effects.magnetUntil=now+8000; if(type==='slow') state.effects.slowUntil=now+5200; if(type==='dash') state.effects.dashUntil=now+1600; if(type==='golden') {state.score+=1000; state.combo+=5; state.effects.happyUntil=now+6000;} burst(state.player.x,state.player.y,18,'#d1a65a'); pop(powerLabel(type),state.player.x,state.player.y-60,'#ffe6a8'); beep(720,.06)}
-  function powerLabel(t){return {shield:'SHIELD',magnet:'MAGNET',slow:'SLOW-MO',dash:'WING DASH',golden:'GOLDEN MUG'}[t]||'POWER'}
-  function spawnObstacle(){const types=['stool','keg','neon','puddle']; const type=types[Math.floor(Math.random()*types.length)]; state.obstacles.push({type,lane:Math.floor(Math.random()*3),x:W.w+90,w:type==='keg'?64:56,h:type==='neon'?54:type==='puddle'?34:68,passed:false,near:false})}
-  function spawnBeer(){state.collectibles.push({type:'beer',lane:Math.floor(Math.random()*3),x:W.w+60,yOffset:-70-Math.random()*120,r:18,missed:false})}
-  function spawnPower(){const types=['shield','magnet','slow','dash','golden']; state.powerups.push({type:types[Math.floor(Math.random()*types.length)],lane:Math.floor(Math.random()*3),x:W.w+70,yOffset:-120-Math.random()*70,r:22})}
-  function playerRect(){const p=state.player; const sliding=p.sliding; return {x:p.x-p.w*.5,y:p.y+(sliding?p.h*.42:0),w:p.w,h:sliding?p.h*.58:p.h,lane:p.lane}}
-  function obstacleRect(o){const base=state.groundY; const h=o.h; const y=o.type==='neon'?base-165:base-h; return {x:o.x-o.w*.5,y,w:o.w,h,lane:o.lane}}
-  function collectRect(c){return {x:c.x-c.r,y:state.groundY+c.yOffset-c.r,w:c.r*2,h:c.r*2,lane:c.lane}}
-  function hit(a,b){return a.lane===b.lane && a.x<a.x+a.w && a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y}
-  function update(dt, now){const p=state.player; const slow=now<state.effects.slowUntil?.75:1, dash=now<state.effects.dashUntil?1.8:1; state.stage=stages.slice().reverse().find(s=>state.distance>=s.at)||stages[0]; state.speed=Math.min(560,265+state.distance*.035)*slow*dash; state.distance+=state.speed*dt*.055; state.score += Math.floor((7+state.multiplier*2)*dt*60*dash); state.spawnTimer-=dt; state.beerTimer-=dt; state.powerTimer-=dt; if(state.spawnTimer<=0){spawnObstacle(); state.spawnTimer=Math.max(.65,1.28-state.distance/5200)} if(state.beerTimer<=0){spawnBeer(); state.beerTimer=.78+Math.random()*.55} if(state.powerTimer<=0){spawnPower(); state.powerTimer=6.5+Math.random()*6} p.x += (state.laneXs[p.targetLane]-p.x)*Math.min(1,dt*12); if(Math.abs(p.x-state.laneXs[p.targetLane])<4) p.lane=p.targetLane; p.vy += 1900*dt; p.y += p.vy*dt; if(p.y>=state.groundY-p.h){p.y=state.groundY-p.h;p.vy=0;p.jumping=false} if(p.sliding && now>p.slideUntil) p.sliding=false; const travel=state.speed*dt; for(const list of [state.obstacles,state.collectibles,state.powerups]) for(const item of list) item.x-=travel; handleCollisions(now); state.obstacles=state.obstacles.filter(o=>o.x>-100); state.collectibles=state.collectibles.filter(c=>c.x>-100 && !c.gone); state.powerups=state.powerups.filter(c=>c.x>-100 && !c.gone); state.particles=state.particles.filter(pt=>(pt.life-=dt)>0); state.popups=state.popups.filter(pt=>(pt.life-=dt)>0); updateMultiplier(now); updateHud()}
-  function handleCollisions(now){const pr=playerRect(); for(const o of state.obstacles){const r=obstacleRect(o); if(!o.passed && o.x<state.player.x-42){o.passed=true;state.obstaclesCleared++; state.score+=25*state.multiplier} if(!o.near && Math.abs(o.x-state.player.x)<78 && o.lane!==state.player.lane){o.near=true;state.nearMisses++;state.combo++;state.score+=50*state.multiplier;pop('NEAR MISS',state.player.x,state.player.y-80,'#ffe6a8')} if(hit(pr,r)){const safe = (o.type==='neon'&&state.player.sliding) || (o.type==='puddle'&&state.player.jumping); if(!safe && now>state.player.invulnUntil){ if(state.effects.shield){state.effects.shield=false;state.player.invulnUntil=now+1200;burst(r.x,r.y,20,'#d1a65a');pop('SHIELD',state.player.x,state.player.y-75,'#ffe6a8');vibrate(45)} else gameOver(); return; } }} for(const c of state.collectibles){ if(now<state.effects.magnetUntil && c.lane===state.player.lane){c.x += (state.player.x-c.x)*.08; c.yOffset += ((state.player.y-state.groundY)-c.yOffset)*.08} if(hit(pr,collectRect(c))){c.gone=true;state.beers++;state.combo++;state.score+=100*state.multiplier;burst(c.x,state.groundY+c.yOffset,10,'#d88b2d');pop('+'+(100*state.multiplier),c.x,state.groundY+c.yOffset,'#d1a65a');beep(520,.035)} else if(!c.missed && c.x<state.player.x-70 && c.lane===state.player.lane){c.missed=true;state.combo=0;pop('COMBO LOST',state.player.x,state.player.y-90,'#b8232f')} } for(const pwr of state.powerups){ if(hit(pr,collectRect(pwr))){pwr.gone=true;activatePower(pwr.type)} }}
-  function updateMultiplier(now){state.maxCombo=Math.max(state.maxCombo,state.combo);state.multiplier = state.combo>=20 ? 4 : state.combo>=10 ? 3 : state.combo>=5 ? 2 : 1; if(state.combo>=20) state.effects.happyUntil=Math.max(state.effects.happyUntil,now+1200)}
-  function draw(){const st=state.stage; ctx.clearRect(0,0,W.w,W.h); const sky=ctx.createLinearGradient(0,0,0,W.h); sky.addColorStop(0,st.sky); sky.addColorStop(.58,'#120e0b'); sky.addColorStop(1,st.road); ctx.fillStyle=sky; ctx.fillRect(0,0,W.w,W.h); drawBackground(st); drawLanes(st); for(const c of state.collectibles) drawBeer(c); for(const p of state.powerups) drawPower(p); for(const o of state.obstacles) drawObstacle(o); drawPlayer(); drawParticles(); drawPopups()}
-  function drawBackground(st){ctx.save();ctx.globalAlpha=.18;ctx.fillStyle=st.accent;ctx.font='900 '+Math.max(72,W.w*.18)+'px Georgia';ctx.textAlign='center';ctx.fillText(st.name.toUpperCase(),W.w/2,W.h*.42);ctx.globalAlpha=.9;for(let i=0;i<8;i++){const x=((i*160-state.distance*2)%(W.w+200))-100;ctx.fillStyle=i%2?'rgba(209,166,90,.13)':'rgba(184,35,47,.12)';ctx.fillRect(x,Math.max(170,W.h*.28),82,42)}ctx.restore()}
-  function drawLanes(st){const y=state.groundY; ctx.fillStyle='rgba(18,14,11,.44)';ctx.fillRect(0,y-6,W.w,W.h-y+6); for(let i=0;i<3;i++){const x=i*state.laneWidth;ctx.fillStyle=i%2?'rgba(255,248,232,.045)':'rgba(255,248,232,.02)';ctx.fillRect(x,y-250,state.laneWidth,260);ctx.strokeStyle='rgba(255,248,232,.16)';ctx.setLineDash([12,12]);ctx.beginPath();ctx.moveTo(x,y-260);ctx.lineTo(x,y+80);ctx.stroke();ctx.setLineDash([])}ctx.strokeStyle=st.accent;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W.w,y);ctx.stroke()}
-  function drawPlayer(){const p=state.player, sliding=p.sliding; ctx.save();ctx.translate(p.x,p.y); if(performance.now()<p.invulnUntil) ctx.globalAlpha=.55; ctx.fillStyle='#fff8e8';ctx.fillRect(-p.w/2,sliding?38:10,p.w,sliding?34:p.h-10);ctx.fillStyle='#b8232f';ctx.fillRect(-p.w/2+7,sliding?45:32,p.w-14,sliding?16:32);ctx.fillStyle='#d1a65a';ctx.beginPath();ctx.arc(0,sliding?38:8,22,0,Math.PI*2);ctx.fill();ctx.fillStyle='#120e0b';ctx.fillRect(-12,sliding?34:4,24,7);ctx.restore()}
-  function drawObstacle(o){const r=obstacleRect(o);ctx.save();ctx.translate(r.x,r.y); if(o.type==='stool'){ctx.fillStyle='#4b2f1f';ctx.fillRect(-25,0,50,18);ctx.fillStyle='#d1a65a';ctx.fillRect(-19,18,8,50);ctx.fillRect(11,18,8,50)} if(o.type==='keg'){ctx.fillStyle='#8f6b3a';ctx.fillRect(-32,0,64,70);ctx.fillStyle='#d1a65a';ctx.fillRect(-32,10,64,8);ctx.fillRect(-32,50,64,8)} if(o.type==='neon'){ctx.strokeStyle='#ff6b76';ctx.lineWidth=7;ctx.strokeRect(-40,0,80,46);ctx.fillStyle='#fff8e8';ctx.font='900 16px sans-serif';ctx.textAlign='center';ctx.fillText('NEON',0,29)} if(o.type==='puddle'){ctx.fillStyle='rgba(150,190,255,.55)';ctx.beginPath();ctx.ellipse(0,18,42,18,0,0,Math.PI*2);ctx.fill()} ctx.restore()}
-  function drawBeer(c){const y=state.groundY+c.yOffset;ctx.save();ctx.translate(c.x,y);ctx.fillStyle='#d88b2d';ctx.fillRect(-12,-20,24,36);ctx.fillStyle='#fff8e8';ctx.fillRect(-12,-24,24,8);ctx.strokeStyle='#fff8e8';ctx.lineWidth=4;ctx.strokeRect(12,-8,10,14);ctx.restore()}
-  function drawPower(p){const y=state.groundY+p.yOffset;ctx.save();ctx.translate(p.x,y);ctx.fillStyle=p.type==='golden'?'#ffd66b':'#d1a65a';ctx.beginPath();ctx.arc(0,0,22,0,Math.PI*2);ctx.fill();ctx.fillStyle='#120e0b';ctx.font='900 18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText({shield:'🥨',magnet:'🧲',slow:'♪',dash:'🍗',golden:'🏆'}[p.type],0,1);ctx.restore()}
-  function burst(x,y,n,color){for(let i=0;i<n;i++) state.particles.push({x,y,vx:(Math.random()-.5)*220,vy:(Math.random()-.8)*220,life:.45+Math.random()*.35,color})}
-  function pop(text,x,y,color){state.popups.push({text,x,y,life:.75,color})}
-  function drawParticles(){for(const p of state.particles){p.x+=p.vx/60;p.y+=p.vy/60;p.vy+=5;ctx.globalAlpha=Math.max(0,p.life*2);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,3+p.life*5,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1}
-  function drawPopups(){ctx.save();ctx.textAlign='center';ctx.font='900 14px sans-serif';for(const p of state.popups){p.y-=.8;ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.fillText(p.text,p.x,p.y)}ctx.restore();ctx.globalAlpha=1}
-  function updateHud(){els.score.textContent=state.score;els.beers.textContent=state.beers;els.combo.textContent=state.multiplier+'x';els.best.textContent=Math.max(state.best,state.score);els.stageName.textContent=state.stage.name;els.shieldChip.classList.toggle('on',state.effects.shield);els.magnetChip.classList.toggle('on',performance.now()<state.effects.magnetUntil);els.slowChip.classList.toggle('on',performance.now()<state.effects.slowUntil);els.dashChip.classList.toggle('on',performance.now()<state.effects.dashUntil);els.happyChip.classList.toggle('on',performance.now()<state.effects.happyUntil)}
-  function tick(now){if(state.mode!=='playing')return; const dt=Math.min(.033,(now-last)/1000||.016); last=now; update(dt,now); draw(); raf=requestAnimationFrame(tick)}
-  function vibrate(ms){ if(navigator.vibrate) navigator.vibrate(ms) } function beep(freq,dur){ if(muted) return; try{const ac=beep.ac||(beep.ac=new AudioContext()); const o=ac.createOscillator(), g=ac.createGain(); o.frequency.value=freq; g.gain.value=.035; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur)}catch(_){}}
-  async function loadBoard(){els.boardRows.innerHTML='<div class="empty">Loading the board…</div>'; try{const res=await fetch('/api/leaderboard',{cache:'no-store'}); boardCache=await res.json();}catch(_){boardCache={today:[],week:[],allTime:[],configured:false,error:true}} renderBoard(activeBoard)}
-  function localFallback(){const best=Number(localStorage.getItem(storageBest)||0); return best?[{rank:1,name:'LOCAL BEST',score:best,beers:0,meta:'This device'}]:[]}
-  function renderBoard(which){activeBoard=which;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.board===which)); const rows=(boardCache[which]&&boardCache[which].length?boardCache[which]:localFallback()).slice(0,10); if(!rows.length){els.boardRows.innerHTML='<div class="empty">No scores yet. Be the first on the board.</div>';return} els.boardRows.innerHTML=rows.map((r,i)=>`<div class="board-row"><div class="rank">#${r.rank||i+1}</div><div><div class="name">${escapeHtml(r.name||'PLAYER')}</div><div class="meta">${Number(r.beers||0)} beers${boardCache.configured?' · verified board':' · local fallback'}</div></div><div class="points">${Number(r.score||0)}</div></div>`).join('')}
-  function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-  async function submitScore(e){e.preventDefault(); if(state.mode!=='over') return; els.submitStatus.textContent='Submitting…'; const payload={name:els.scoreForm.playerName.value, phone:els.scoreForm.playerPhone.value, score:state.score, beers:state.beers, durationMs:Math.max(3000,Math.floor(performance.now()-runStart)), jumps:state.jumps, slides:state.slides, obstaclesCleared:state.obstaclesCleared, nearMisses:state.nearMisses, maxCombo:state.maxCombo, sessionId}; try{const res=await fetch('/api/submit-score',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}); const data=await res.json(); if(!res.ok) throw new Error(data.error||'Could not submit score.'); els.submitStatus.textContent=data.isWeeklyLeader?'You are leading the weekly board.':'Score submitted.'; await loadBoard(); setTimeout(()=>{closeModal('submitModal');openLeaderboard()},550)}catch(err){els.submitStatus.textContent=err.message||'Could not submit score.'}}
-  function openLeaderboard(){els.leaderboardModal.classList.add('open');els.leaderboardModal.setAttribute('aria-hidden','false');loadBoard()} function openSubmit(){els.submitModal.classList.add('open');els.submitModal.setAttribute('aria-hidden','false')} function closeModal(id){const el=document.getElementById(id);el.classList.remove('open');el.setAttribute('aria-hidden','true')}
-  function onPointerDown(e){pointerStart={x:e.clientX,y:e.clientY,t:performance.now()}; e.preventDefault()} function onPointerUp(e){if(!pointerStart)return; const dx=e.clientX-pointerStart.x, dy=e.clientY-pointerStart.y, adx=Math.abs(dx), ady=Math.abs(dy); if(Math.max(adx,ady)<28) requestJump(); else if(adx>ady && dx<0) changeLane(-1); else if(adx>ady && dx>0) changeLane(1); else if(ady>adx && dy>0) requestSlide(); else if(ady>adx && dy<0) requestJump(); pointerStart=null; e.preventDefault()}
-  canvas.addEventListener('pointerdown',onPointerDown,{passive:false}); canvas.addEventListener('pointerup',onPointerUp,{passive:false}); addEventListener('keydown',e=>{if(e.key==='ArrowLeft')changeLane(-1);if(e.key==='ArrowRight')changeLane(1);if(e.key==='ArrowUp'||e.code==='Space')requestJump();if(e.key==='ArrowDown')requestSlide();if(e.key==='Escape')pause()});
-  els.startBtn.addEventListener('click',()=> state.mode==='paused'?pause():startRun()); els.leaderboardBtn.addEventListener('click',openLeaderboard); els.submitBtn.addEventListener('click',openSubmit); els.soundBtn.addEventListener('click',()=>{muted=!muted;localStorage.setItem('salsMuted',muted?'1':'0');els.soundBtn.textContent=muted?'🔇':'🔊'}); els.scoreForm.addEventListener('submit',submitScore); document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close))); document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>renderBoard(t.dataset.board)));
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(()=>{}); state=freshState(); els.soundBtn.textContent=muted?'🔇':'🔊'; resizeCanvas(); updateHud(); showOverlay('ready'); draw();
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const shell = document.getElementById('shell');
+  const ids = ['score','beers','combo','best','stageName','overlay','overlayEyebrow','overlayTitle','overlayText','missionList','finalStats','finalScore','finalBeers','startBtn','submitBtn','leaderboardBtn','leaderboardModal','boardRows','submitModal','scoreForm','formScore','formBeers','submitStatus','soundBtn','hintText','shieldChip','magnetChip','slowChip','dashChip','happyChip'];
+  const els = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+  const W = { w: innerWidth, h: innerHeight, dpr: 1 };
+  const storageBest = 'salsRunBestV3';
+  const stages = [
+    {name:'Classic Street', at:0, sky:'#092318', road:'#2a1d14', accent:'#d1a65a'},
+    {name:'Tavern Room', at:1200, sky:'#1a1410', road:'#3b2618', accent:'#b8232f'},
+    {name:'Kitchen Rush', at:2600, sky:'#23150f', road:'#4b2f1f', accent:'#d88b2d'},
+    {name:'Last Call', at:4300, sky:'#07111d', road:'#17111f', accent:'#9ab7ff'}
+  ];
+  const dailyMissions = [
+    {label:'Regular order', text:'Collect 12 beers in one run.'},
+    {label:'Happy hour', text:'Hold a 10 combo streak.'},
+    {label:'Clean run', text:'Clear 15 obstacles without a wipeout.'}
+  ];
+  let state;
+  let raf = 0;
+  let last = 0;
+  let runStart = 0;
+  let sessionId = '';
+  let pointerStart = null;
+  let muted = localStorage.getItem('salsMuted') !== '0';
+  let boardCache = {today:[],week:[],allTime:[],configured:false};
+  let activeBoard = 'today';
+
+  function freshState(){
+    return {
+      mode:'ready', score:0, bonusScore:0, beers:0, combo:0, maxCombo:0, multiplier:1, wasNewBest:false,
+      best:Number(localStorage.getItem(storageBest)||0), speed:250, distance:0, jumps:0, slides:0,
+      obstaclesCleared:0, nearMisses:0, stage:stages[0], groundY:0, graceUntil:0,
+      obstacleTimer:2.15, beerTimer:1.05, powerTimer:7.5, patternIndex:0, reason:'',
+      particles:[], popups:[], obstacles:[], beersOnRun:[], powerups:[], clouds:[],
+      effects:{shield:false, magnetUntil:0, slowUntil:0, happyUntil:0, dashUntil:0},
+      player:{x:0, y:0, w:58, h:88, vy:0, grounded:true, sliding:false, slideUntil:0, coyoteUntil:0, jumpBufferUntil:0, invulnUntil:0, run:0, blink:0}
+    };
+  }
+
+  function resizeCanvas(){
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W.w = innerWidth; W.h = innerHeight; W.dpr = dpr;
+    canvas.width = Math.floor(W.w*dpr); canvas.height = Math.floor(W.h*dpr);
+    canvas.style.width = W.w+'px'; canvas.style.height = W.h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    if(state) layoutGame();
+  }
+  addEventListener('resize', resizeCanvas);
+  addEventListener('orientationchange', () => setTimeout(resizeCanvas, 140));
+
+  function layoutGame(){
+    state.groundY = Math.max(340, W.h - Math.max(104, W.h*.16));
+    state.player.x = Math.max(92, Math.min(156, W.w*.18));
+    if(state.player.y === 0 || state.player.y > state.groundY) state.player.y = state.groundY;
+  }
+
+  function renderMissions(){
+    els.missionList.innerHTML = dailyMissions.map(m => `<div class="mission"><b>${m.label}</b><span>${m.text}</span></div>`).join('');
+  }
+
+  function showOverlay(kind){
+    els.overlay.classList.remove('hidden');
+    els.finalStats.classList.toggle('hide', kind !== 'over');
+    els.submitBtn.classList.toggle('hide', kind !== 'over');
+    if(kind === 'ready'){
+      els.overlayEyebrow.textContent = 'Premium tavern side-scroller';
+      els.overlayTitle.textContent = 'Ready?';
+      els.overlayText.textContent = 'Tap to jump. Swipe down to slide under neon. Grab beer routes, keep your combo alive, and survive Last Call.';
+      els.startBtn.textContent = 'Start run';
+      renderMissions();
+    }
+    if(kind === 'pause'){
+      els.overlayEyebrow.textContent = 'Paused';
+      els.overlayTitle.textContent = 'Catch your breath.';
+      els.overlayText.textContent = 'Tap resume when you are ready to jump the next stool.';
+      els.startBtn.textContent = 'Resume';
+    }
+    if(kind === 'over'){
+      els.overlayEyebrow.textContent = state.wasNewBest ? 'New house record' : 'Run over';
+      els.overlayTitle.textContent = state.wasNewBest ? 'New best.' : 'One more?';
+      els.overlayText.textContent = state.reason || 'You clipped the obstacle. Jump earlier, slide under neon, and protect the combo.';
+      els.startBtn.textContent = 'Run it back';
+      els.finalScore.textContent = state.score;
+      els.finalBeers.textContent = state.beers;
+      els.formScore.textContent = state.score;
+      els.formBeers.textContent = state.beers;
+      renderMissions();
+    }
+  }
+
+  function startRun(){
+    cancelAnimationFrame(raf);
+    state = freshState();
+    sessionId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now());
+    resizeCanvas();
+    runStart = performance.now();
+    state.graceUntil = runStart + 2300;
+    last = runStart;
+    els.overlay.classList.add('hidden');
+    els.hintText.textContent = 'Tap to jump · Swipe down to slide · Clear obstacles to build combo';
+    state.mode = 'playing';
+    pop('WARM-UP', state.player.x + 80, state.groundY - 175, '#ffe6a8');
+    tick(last);
+  }
+
+  function pause(){
+    if(state.mode === 'playing') { state.mode='paused'; cancelAnimationFrame(raf); showOverlay('pause'); }
+    else if(state.mode === 'paused') { els.overlay.classList.add('hidden'); state.mode='playing'; last=performance.now(); tick(last); }
+  }
+
+  function gameOver(reason){
+    if(state.mode !== 'playing') return;
+    state.mode = 'over';
+    state.reason = reason;
+    cancelAnimationFrame(raf);
+    const old = state.best;
+    state.wasNewBest = state.score > old;
+    if(state.wasNewBest){
+      localStorage.setItem(storageBest, String(state.score)); state.best = state.score;
+      shell.classList.add('new-best'); setTimeout(()=>shell.classList.remove('new-best'), 700);
+    }
+    burst(state.player.x+32, state.player.y-44, 28, state.stage.accent);
+    vibrate(80);
+    showOverlay('over'); updateHud();
+  }
+
+  function requestJump(){
+    if(state.mode === 'ready' || state.mode === 'over') { startRun(); return; }
+    if(state.mode === 'paused') { pause(); return; }
+    if(state.mode !== 'playing') return;
+    const p = state.player;
+    p.jumpBufferUntil = performance.now()+120;
+    tryJump(performance.now());
+  }
+
+  function tryJump(now){
+    const p = state.player;
+    if(now <= p.jumpBufferUntil && (p.grounded || now <= p.coyoteUntil)){
+      p.vy = -880; p.grounded = false; p.coyoteUntil = 0; p.jumpBufferUntil = 0;
+      p.sliding = false; state.jumps++;
+      pop('HOP', p.x+34, p.y-112, '#fff8e8'); beep(430,.045);
+    }
+  }
+
+  function requestSlide(){
+    if(state.mode !== 'playing') return;
+    const p = state.player;
+    p.sliding = true; p.slideUntil = performance.now()+1050; state.slides++;
+    pop('SLIDE', p.x+38, p.y-92, '#d1a65a'); beep(250,.035);
+  }
+
+  function spawnObstacle(pattern){
+    const x = W.w + 90;
+    const type = pattern || weightedObstacle();
+    const dims = {
+      stool:{w:66,h:58,kind:'jump',label:'Jump the stool'},
+      keg:{w:70,h:60,kind:'jump',label:'Jump the keg'},
+      puddle:{w:86,h:30,kind:'jump',label:'Hop the spill'},
+      neon:{w:96,h:68,kind:'slide',label:'Slide under neon'}
+    }[type];
+    state.obstacles.push({type, x, y:0, w:dims.w, h:dims.h, kind:dims.kind, label:dims.label, passed:false, near:false, warned:false});
+  }
+
+  function weightedObstacle(){
+    const d = state.distance;
+    const choices = d < 650 ? ['stool','stool','puddle'] : d < 1500 ? ['stool','keg','puddle','neon'] : ['stool','keg','puddle','neon','stool','neon'];
+    return choices[Math.floor(Math.random()*choices.length)];
+  }
+
+  function spawnPattern(){
+    const d = state.distance;
+    const patterns = d < 900 ? [['stool'],['puddle'],['stool']] : d < 2300 ? [['stool'],['neon'],['puddle'],['keg'],['stool','beerRoute']] : [['stool'],['neon'],['puddle'],['keg'],['stool','neon'],['beerRoute','keg']];
+    const pattern = patterns[state.patternIndex++ % patterns.length];
+    if(pattern.includes('beerRoute')) spawnBeerRoute();
+    const obstacleTypes = pattern.filter(x => x !== 'beerRoute');
+    const runId = sessionId;
+    obstacleTypes.forEach((type, i) => setTimeout(() => { if(state.mode === 'playing' && sessionId === runId) spawnObstacle(type); }, i*520));
+  }
+
+  function spawnBeerRoute(){
+    const count = 4 + Math.floor(Math.random()*3);
+    const startX = W.w + 90;
+    const arc = Math.random() > .45;
+    for(let i=0;i<count;i++){
+      const mid = (count-1)/2;
+      const lift = arc ? Math.max(0, 1 - Math.abs(i-mid)/(mid || 1))*68 : (i%2)*26;
+      state.beersOnRun.push({x:startX+i*62, y:state.groundY-96-lift-Math.random()*14, r:18, hit:false, missed:false, bob:Math.random()*Math.PI*2});
+    }
+  }
+
+  function spawnPower(){
+    const types = ['shield','slow','magnet','golden'];
+    const type = types[Math.floor(Math.random()*types.length)];
+    state.powerups.push({type, x:W.w+110, y:state.groundY-175-Math.random()*60, r:22, hit:false, bob:Math.random()*Math.PI*2});
+  }
+
+  function activatePower(type){
+    const now = performance.now();
+    if(type === 'shield') state.effects.shield = true;
+    if(type === 'magnet') state.effects.magnetUntil = now+7800;
+    if(type === 'slow') state.effects.slowUntil = now+4800;
+    if(type === 'golden') { state.combo += 4; state.bonusScore += 450; state.effects.happyUntil = now+5200; }
+    burst(state.player.x+46, state.player.y-82, 18, '#d1a65a');
+    pop({shield:'PRETZEL SHIELD',magnet:'BEER MAGNET',slow:'SLOW-MO',golden:'HAPPY HOUR'}[type], state.player.x+70, state.player.y-132, '#ffe6a8');
+    beep(720,.06); vibrate(35);
+  }
+
+  function playerRect(){
+    const p = state.player;
+    const h = p.sliding ? 46 : p.h;
+    const y = p.y - h;
+    return {x:p.x+15, y:y+14, w:p.w-28, h:h-22};
+  }
+
+  function obstacleRect(o){
+    if(o.type === 'neon') return {x:o.x-o.w/2, y:state.groundY-132, w:o.w, h:o.h};
+    if(o.type === 'puddle') return {x:o.x-o.w/2, y:state.groundY-o.h+4, w:o.w, h:o.h};
+    return {x:o.x-o.w/2, y:state.groundY-o.h, w:o.w, h:o.h};
+  }
+
+  function rectsHit(a,b){ return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
+  function circleRectHit(cx,cy,r,rect){ const x=Math.max(rect.x,Math.min(cx,rect.x+rect.w)); const y=Math.max(rect.y,Math.min(cy,rect.y+rect.h)); const dx=cx-x, dy=cy-y; return dx*dx+dy*dy < r*r; }
+
+  function update(dt, now){
+    const p = state.player;
+    const slow = now < state.effects.slowUntil ? .72 : 1;
+    const happy = now < state.effects.happyUntil ? 1.18 : 1;
+    state.stage = stages.slice().reverse().find(s => state.distance >= s.at) || stages[0];
+    const ramp = Math.min(1, state.distance/5000);
+    state.speed = (220 + ramp*210 + Math.min(70, state.obstaclesCleared*2.2)) * slow;
+    state.distance += state.speed*dt*.92;
+    p.run += dt*9;
+
+    state.obstacleTimer -= dt;
+    state.beerTimer -= dt;
+    state.powerTimer -= dt;
+    if(state.obstacleTimer <= 0){
+      spawnPattern();
+      const base = state.distance < 900 ? 1.95 : state.distance < 2400 ? 1.55 : 1.2;
+      state.obstacleTimer = Math.max(1.05, base + .35 + Math.random()*.65 - state.distance/12000);
+    }
+    if(state.beerTimer <= 0){ spawnBeerRoute(); state.beerTimer = 2.1 + Math.random()*1.4; }
+    if(state.powerTimer <= 0){ spawnPower(); state.powerTimer = 7.5 + Math.random()*7; }
+
+    const wasGrounded = p.grounded;
+    p.vy += 1820*dt;
+    p.y += p.vy*dt;
+    if(p.y >= state.groundY){
+      p.y = state.groundY; p.vy = 0;
+      if(!wasGrounded) { dust(p.x+28, state.groundY, 8); }
+      p.grounded = true;
+    } else {
+      if(wasGrounded) p.coyoteUntil = now+95;
+      p.grounded = false;
+    }
+    if(p.sliding && now > p.slideUntil) p.sliding = false;
+    tryJump(now);
+
+    const travel = state.speed*dt;
+    for(const o of state.obstacles) o.x -= travel;
+    for(const b of state.beersOnRun) { b.x -= travel; b.bob += dt*5; }
+    for(const pow of state.powerups) { pow.x -= travel; pow.bob += dt*4; }
+
+    handleCollisions(now);
+    if(state.mode !== 'playing') return;
+    state.obstacles = state.obstacles.filter(o => o.x > -130);
+    state.beersOnRun = state.beersOnRun.filter(b => b.x > -100 && !b.hit);
+    state.powerups = state.powerups.filter(pow => pow.x > -110 && !pow.hit);
+    state.particles = state.particles.filter(pt => (pt.life -= dt) > 0);
+    state.popups = state.popups.filter(pt => (pt.life -= dt) > 0);
+
+    updateMultiplier(now);
+    state.bonusScore += dt*happy*state.multiplier*2;
+    state.score = Math.max(0, Math.floor(state.distance*.13 + state.bonusScore));
+    updateHud();
+  }
+
+  function handleCollisions(now){
+    const pr = playerRect();
+    for(const o of state.obstacles){
+      const r = obstacleRect(o);
+      const frontGap = r.x - (state.player.x + state.player.w);
+      if(!o.warned && frontGap < 260 && frontGap > 190){
+        o.warned = true;
+        if(o.type === 'neon') pop('SLIDE', r.x, r.y-15, '#ffccd1');
+        else pop('JUMP', r.x, r.y-15, '#ffe6a8');
+      }
+      if(!o.near && Math.abs((pr.x+pr.w) - r.x) < 26 && !rectsHit(pr,r)){
+        o.near = true; state.nearMisses++; state.combo++; state.bonusScore += 55*state.multiplier;
+        pop('NEAR MISS', state.player.x+66, state.player.y-126, '#ffe6a8');
+      }
+      if(!o.passed && r.x + r.w < state.player.x){
+        o.passed = true; state.obstaclesCleared++; state.combo++; state.bonusScore += 45*state.multiplier;
+        pop('CLEAR', state.player.x+48, state.player.y-112, '#d1a65a');
+      }
+      if(rectsHit(pr,r)){
+        const safe = (o.type === 'neon' && state.player.sliding);
+        if(safe) continue;
+        if(now < state.graceUntil || now < state.player.invulnUntil){
+          state.player.invulnUntil = now + 1200;
+          state.combo = 0;
+          burst(r.x+r.w/2, r.y+r.h/2, 18, '#d1a65a');
+          pop('WARM-UP SAVE', state.player.x+88, state.player.y-132, '#ffe6a8');
+          o.x -= 150;
+          continue;
+        }
+        if(state.effects.shield){
+          state.effects.shield = false; state.player.invulnUntil = now+1200; state.combo = 0;
+          burst(r.x+r.w/2, r.y+r.h/2, 22, '#d1a65a'); pop('SHIELD SAVE', state.player.x+82, state.player.y-132, '#ffe6a8'); vibrate(45);
+          o.x -= 170;
+          continue;
+        }
+        const reason = o.type === 'neon' ? 'You hit the neon sign. Swipe down earlier and stay low until it passes.' : `You clipped the ${o.type}. Tap earlier to jump cleanly over it.`;
+        gameOver(reason); return;
+      }
+    }
+    for(const b of state.beersOnRun){
+      const by = b.y + Math.sin(b.bob)*7;
+      if(now < state.effects.magnetUntil && Math.abs(b.x - state.player.x) < 260){
+        b.x += ((state.player.x+35)-b.x)*.08;
+        b.y += ((state.player.y-96)-b.y)*.08;
+      }
+      if(circleRectHit(b.x, by, b.r, pr)){
+        b.hit = true; state.beers++; state.combo++; state.bonusScore += 125*state.multiplier;
+        burst(b.x, by, 14, '#d88b2d'); pop('+'+(125*state.multiplier), b.x, by-22, '#d1a65a'); beep(560,.035);
+      } else if(!b.missed && b.x < state.player.x-55){
+        b.missed = true;
+        if(state.combo >= 3) pop('COMBO LOST', state.player.x+80, state.player.y-130, '#b8232f');
+        state.combo = 0;
+      }
+    }
+    for(const pow of state.powerups){
+      const py = pow.y + Math.sin(pow.bob)*8;
+      if(circleRectHit(pow.x, py, pow.r, pr)){ pow.hit = true; activatePower(pow.type); }
+    }
+  }
+
+  function updateMultiplier(now){
+    state.maxCombo = Math.max(state.maxCombo, state.combo);
+    state.multiplier = state.combo >= 18 ? 4 : state.combo >= 10 ? 3 : state.combo >= 5 ? 2 : 1;
+    if(state.combo >= 10) state.effects.happyUntil = Math.max(state.effects.happyUntil, now+850);
+  }
+
+  function draw(){
+    const st = state.stage;
+    ctx.clearRect(0,0,W.w,W.h);
+    const sky = ctx.createLinearGradient(0,0,0,W.h);
+    sky.addColorStop(0, st.sky); sky.addColorStop(.56, '#120e0b'); sky.addColorStop(1, st.road);
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W.w,W.h);
+    drawBackground(st); drawStreet(st);
+    state.beersOnRun.forEach(drawBeer); state.powerups.forEach(drawPower); state.obstacles.forEach(drawObstacle);
+    drawPlayer(); drawParticles(); drawPopups(); drawWarmup();
+  }
+
+  function drawBackground(st){
+    ctx.save();
+    const parallax = state.distance*.18;
+    ctx.globalAlpha = .12; ctx.fillStyle = st.accent; ctx.font = '900 '+Math.max(78,W.w*.16)+'px Georgia'; ctx.textAlign='center';
+    ctx.fillText(st.name.toUpperCase(), W.w/2, Math.max(220, W.h*.43));
+    ctx.globalAlpha = .9;
+    for(let x = -((parallax)%180)-80; x < W.w+220; x += 180){
+      ctx.fillStyle = 'rgba(255,248,232,.055)'; ctx.fillRect(x, Math.max(156,W.h*.26), 92, 150);
+      ctx.fillStyle = 'rgba(209,166,90,.16)'; ctx.fillRect(x+16, Math.max(182,W.h*.26+28), 20, 34); ctx.fillRect(x+54, Math.max(182,W.h*.26+28), 20, 34);
+    }
+    ctx.globalAlpha = .65;
+    ctx.fillStyle = '#d1a65a'; ctx.font = '900 13px system-ui'; ctx.textAlign='left';
+    ctx.fillText('CLASSIC ST · HOOSICK FALLS', 26 - (state.distance*.28 % 260), state.groundY-185);
+    ctx.restore();
+  }
+
+  function drawStreet(st){
+    const y = state.groundY;
+    ctx.fillStyle = 'rgba(18,14,11,.72)'; ctx.fillRect(0, y+8, W.w, W.h-y);
+    ctx.fillStyle = '#332318'; ctx.fillRect(0, y+18, W.w, 14);
+    ctx.strokeStyle = 'rgba(255,248,232,.32)'; ctx.lineWidth = 4; ctx.setLineDash([42,34]);
+    ctx.beginPath(); ctx.moveTo(-((state.distance*.85)%76), y+82); ctx.lineTo(W.w, y+82); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = st.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W.w,y); ctx.stroke();
+  }
+
+  function drawPlayer(){
+    const p = state.player; const sliding = p.sliding; const h = sliding ? 46 : p.h; const top = p.y - h;
+    ctx.save(); ctx.translate(p.x, top);
+    if(performance.now() < p.invulnUntil) ctx.globalAlpha = .58 + Math.sin(performance.now()/55)*.25;
+    const leg = Math.sin(p.run)*9;
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle = '#120e0b'; ctx.lineWidth = 8;
+    ctx.beginPath();
+    if(!sliding){ ctx.moveTo(27, h-34); ctx.lineTo(18+leg, h-2); ctx.moveTo(38, h-34); ctx.lineTo(48-leg, h-2); }
+    else { ctx.moveTo(16,h-8); ctx.lineTo(52,h-6); }
+    ctx.stroke();
+    ctx.fillStyle = '#fff8e8'; roundedRect(11, sliding?15:10, 45, sliding?24:58, 12); ctx.fill();
+    ctx.fillStyle = '#b8232f'; roundedRect(18, sliding?22:32, 31, sliding?10:28, 7); ctx.fill();
+    ctx.fillStyle = '#d1a65a'; ctx.beginPath(); ctx.arc(33, sliding?13:8, 21, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#120e0b'; ctx.fillRect(22, sliding?9:4, 22, 7);
+    ctx.restore();
+  }
+
+  function drawObstacle(o){
+    const r = obstacleRect(o);
+    ctx.save(); ctx.translate(r.x+r.w/2, r.y);
+    if(o.type === 'stool'){
+      ctx.fillStyle='#4b2f1f'; roundedRect(-32,0,64,20,8); ctx.fill(); ctx.fillStyle='#d1a65a'; ctx.fillRect(-23,18,9,54); ctx.fillRect(14,18,9,54);
+    }
+    if(o.type === 'keg'){
+      ctx.fillStyle='#8f6b3a'; roundedRect(-35,0,70,70,16); ctx.fill(); ctx.fillStyle='#d1a65a'; ctx.fillRect(-35,12,70,8); ctx.fillRect(-35,50,70,8); ctx.fillStyle='rgba(18,14,11,.32)'; ctx.fillRect(-4,8,8,54);
+    }
+    if(o.type === 'puddle'){
+      ctx.fillStyle='rgba(150,190,255,.62)'; ctx.beginPath(); ctx.ellipse(0,18,43,18,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='rgba(255,255,255,.4)'; ctx.beginPath(); ctx.ellipse(-12,13,12,5,0,0,Math.PI*2); ctx.fill();
+    }
+    if(o.type === 'neon'){
+      ctx.shadowColor='#ff6674'; ctx.shadowBlur=18; ctx.strokeStyle='#ff6b76'; ctx.lineWidth=7; roundedRect(-48,0,96,58,10); ctx.stroke();
+      ctx.shadowBlur=0; ctx.fillStyle='#fff8e8'; ctx.font='900 15px system-ui'; ctx.textAlign='center'; ctx.fillText('NEON',0,35);
+      ctx.fillStyle='rgba(255,107,118,.22)'; ctx.fillRect(-50,58,100,16);
+    }
+    ctx.restore();
+  }
+
+  function drawBeer(b){
+    const y = b.y + Math.sin(b.bob)*7;
+    ctx.save(); ctx.translate(b.x,y); ctx.rotate(Math.sin(b.bob)*.08);
+    ctx.fillStyle='#d88b2d'; roundedRect(-12,-20,24,36,4); ctx.fill();
+    ctx.fillStyle='#fff8e8'; roundedRect(-13,-25,26,9,5); ctx.fill();
+    ctx.strokeStyle='#fff8e8'; ctx.lineWidth=4; ctx.strokeRect(12,-8,10,14);
+    ctx.restore();
+  }
+
+  function drawPower(p){
+    const y = p.y + Math.sin(p.bob)*8;
+    ctx.save(); ctx.translate(p.x,y); ctx.fillStyle=p.type==='golden'?'#ffd66b':'#d1a65a'; ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#120e0b'; ctx.font='900 18px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText({shield:'🥨',magnet:'🧲',slow:'♪',golden:'🏆'}[p.type]||'★',0,1); ctx.restore();
+  }
+
+  function drawWarmup(){
+    if(state.mode !== 'playing') return;
+    const left = Math.max(0, state.graceUntil - performance.now());
+    if(left > 0){
+      ctx.save(); ctx.globalAlpha=.9; ctx.fillStyle='rgba(18,14,11,.52)'; roundedRect(W.w/2-86, state.groundY-220, 172, 38, 18); ctx.fill();
+      ctx.fillStyle='#ffe6a8'; ctx.font='900 12px system-ui'; ctx.textAlign='center'; ctx.fillText('WARM-UP SAVE ACTIVE', W.w/2, state.groundY-196); ctx.restore();
+    }
+  }
+
+  function roundedRect(x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2); ctx.beginPath(); ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath();
+  }
+
+  function burst(x,y,n,color){ for(let i=0;i<n;i++) state.particles.push({x,y,vx:(Math.random()-.5)*260,vy:(Math.random()-.8)*260,life:.45+Math.random()*.35,color}); }
+  function dust(x,y,n){ for(let i=0;i<n;i++) state.particles.push({x,y,vx:-80-Math.random()*160,vy:-Math.random()*90,life:.25+Math.random()*.25,color:'rgba(255,248,232,.52)'}); }
+  function pop(text,x,y,color){ state.popups.push({text,x,y,life:.82,color}); }
+  function drawParticles(){ for(const p of state.particles){ p.x += p.vx/60; p.y += p.vy/60; p.vy += 5; ctx.globalAlpha = Math.max(0,p.life*2); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x,p.y,3+p.life*5,0,Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; }
+  function drawPopups(){ ctx.save(); ctx.textAlign='center'; ctx.font='900 14px system-ui'; for(const p of state.popups){ p.y -= .75; ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.color; ctx.fillText(p.text,p.x,p.y); } ctx.restore(); ctx.globalAlpha=1; }
+
+  function updateHud(){
+    els.score.textContent = state.score;
+    els.beers.textContent = state.beers;
+    els.combo.textContent = state.multiplier+'x';
+    els.best.textContent = Math.max(state.best, state.score);
+    els.stageName.textContent = state.stage.name;
+    els.shieldChip.classList.toggle('on', state.effects.shield);
+    els.magnetChip.classList.toggle('on', performance.now() < state.effects.magnetUntil);
+    els.slowChip.classList.toggle('on', performance.now() < state.effects.slowUntil);
+    els.dashChip.classList.toggle('on', false);
+    els.happyChip.classList.toggle('on', performance.now() < state.effects.happyUntil);
+  }
+
+  function tick(now){
+    if(state.mode !== 'playing') return;
+    const dt = Math.min(.033, (now-last)/1000 || .016);
+    last = now; update(dt,now); draw(); raf = requestAnimationFrame(tick);
+  }
+  function vibrate(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+  function beep(freq,dur){ if(muted) return; try{const ac=beep.ac||(beep.ac=new AudioContext()); const o=ac.createOscillator(), g=ac.createGain(); o.frequency.value=freq; g.gain.value=.035; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);}catch(_){} }
+
+  async function loadBoard(){ els.boardRows.innerHTML='<div class="empty">Loading the board…</div>'; try{ const res=await fetch('/api/leaderboard',{cache:'no-store'}); boardCache=await res.json(); }catch(_){ boardCache={today:[],week:[],allTime:[],configured:false,error:true}; } renderBoard(activeBoard); }
+  function localFallback(){ const best=Number(localStorage.getItem(storageBest)||0); return best ? [{rank:1,name:'LOCAL BEST',score:best,beers:0,meta:'This device'}] : []; }
+  function renderBoard(which){ activeBoard=which; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.board===which)); const rows=(boardCache[which]&&boardCache[which].length?boardCache[which]:localFallback()).slice(0,10); if(!rows.length){els.boardRows.innerHTML='<div class="empty">No scores yet. Be the first on the board.</div>';return;} els.boardRows.innerHTML=rows.map((r,i)=>`<div class="board-row"><div class="rank">#${r.rank||i+1}</div><div><div class="name">${escapeHtml(r.name||'PLAYER')}</div><div class="meta">${Number(r.beers||0)} beers${boardCache.configured?' · verified board':' · local fallback'}</div></div><div class="points">${Number(r.score||0)}</div></div>`).join(''); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  async function submitScore(e){ e.preventDefault(); if(state.mode!=='over') return; els.submitStatus.textContent='Submitting…'; const payload={name:els.scoreForm.playerName.value, phone:els.scoreForm.playerPhone.value, score:state.score, beers:state.beers, durationMs:Math.max(3000,Math.floor(performance.now()-runStart)), jumps:state.jumps, slides:state.slides, obstaclesCleared:state.obstaclesCleared, nearMisses:state.nearMisses, maxCombo:state.maxCombo, sessionId}; try{ const res=await fetch('/api/submit-score',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}); const data=await res.json(); if(!res.ok) throw new Error(data.error||'Could not submit score.'); els.submitStatus.textContent=data.isWeeklyLeader?'You are leading the weekly board.':'Score submitted.'; await loadBoard(); setTimeout(()=>{closeModal('submitModal');openLeaderboard();},550); }catch(err){ els.submitStatus.textContent=err.message||'Could not submit score.'; } }
+  function openLeaderboard(){ els.leaderboardModal.classList.add('open'); els.leaderboardModal.setAttribute('aria-hidden','false'); loadBoard(); }
+  function openSubmit(){ els.submitModal.classList.add('open'); els.submitModal.setAttribute('aria-hidden','false'); }
+  function closeModal(id){ const el=document.getElementById(id); el.classList.remove('open'); el.setAttribute('aria-hidden','true'); }
+
+  function onPointerDown(e){ pointerStart={x:e.clientX,y:e.clientY,t:performance.now()}; e.preventDefault(); }
+  function onPointerUp(e){
+    if(!pointerStart) return;
+    const dx=e.clientX-pointerStart.x, dy=e.clientY-pointerStart.y, adx=Math.abs(dx), ady=Math.abs(dy);
+    if(ady > 34 && dy > 0 && ady > adx*.9) requestSlide();
+    else requestJump();
+    pointerStart=null; e.preventDefault();
+  }
+  canvas.addEventListener('pointerdown',onPointerDown,{passive:false});
+  canvas.addEventListener('pointerup',onPointerUp,{passive:false});
+  addEventListener('keydown', e => { if(e.key==='ArrowUp'||e.code==='Space') requestJump(); if(e.key==='ArrowDown') requestSlide(); if(e.key==='Escape') pause(); });
+  els.startBtn.addEventListener('click', () => state.mode==='paused' ? pause() : startRun());
+  els.leaderboardBtn.addEventListener('click', openLeaderboard);
+  els.submitBtn.addEventListener('click', openSubmit);
+  els.soundBtn.addEventListener('click', () => { muted=!muted; localStorage.setItem('salsMuted',muted?'1':'0'); els.soundBtn.textContent=muted?'🔇':'🔊'; });
+  els.scoreForm.addEventListener('submit', submitScore);
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => renderBoard(t.dataset.board)));
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+  window.__salsDebug = () => state ? {mode:state.mode, score:state.score, distance:Math.round(state.distance), obstacles:state.obstacles.map(o=>({type:o.type,x:Math.round(o.x)})), beers:state.beersOnRun.length, player:{x:Math.round(state.player.x),y:Math.round(state.player.y),grounded:state.player.grounded,sliding:state.player.sliding}, reason:state.reason} : null;
+  state=freshState(); els.soundBtn.textContent=muted?'🔇':'🔊'; els.hintText.textContent='Tap to jump · Swipe down to slide under neon'; resizeCanvas(); updateHud(); showOverlay('ready'); draw();
 })();
 </script>
 </body>
