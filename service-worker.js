@@ -1,9 +1,11 @@
-const CACHE_NAME = 'sals-run-v2-fullscreen';
+const CACHE_NAME = 'sals-run-v3-sprites';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/game.html',
   '/manifest.webmanifest',
+  '/public/assets/game-sprites.png',
+  '/public/assets/game-sprites.json',
   '/public/assets/app-icon-192.png',
   '/public/assets/app-icon-512.png',
   '/assets/sals-run-qr.png'

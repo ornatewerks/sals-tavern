@@ -37,6 +37,8 @@ URLs:
 - [x] Gameplay avoids visual clutter: no random beer spam, no stacked hazards in the decision window, and reward routes appear as short intentional arcs after hazard beats.
 - [x] Hazard art is anchored to the ground with shadows and action cues instead of floating as unrelated objects.
 - [x] Hit feedback includes tighter visual/collision alignment, screen shake, and explicit death copy.
+- [x] Sprite atlas is loaded from `public/assets/game-sprites.png` with frame metadata in `public/assets/game-sprites.json`.
+- [x] Player run/jump/slide, stool, keg, puddle, neon, beer, shield, and impact effects render from animation frames rather than ad-hoc canvas primitives.
 - [x] Beer collection increases score and combo.
 - [x] Combo changes multiplier.
 - [x] Near misses score bonus points.
